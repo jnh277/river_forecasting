@@ -1,109 +1,98 @@
-import json
-import pandas as pd
 import matplotlib.pyplot as plt
 from sklearn.pipeline import Pipeline
 from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import MinMaxScaler
-from sklearn.linear_model import LinearRegression
+from sklearn.preprocessing import MinMaxScaler, PolynomialFeatures
+from sklearn.linear_model import LinearRegression, Ridge
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.neighbors import KNeighborsRegressor
+import statsmodels.api as sm
+from sklearn.metrics import mean_squared_error
+import pandas as pd
+import seaborn as sns
+import numpy as np
 
-from river_forecasting.data import load_section, split_contiguous
+from feature_engine.timeseries.forecasting import LagFeatures, WindowFeatures
+from river_forecasting.data import load_section, split_contiguous, RainImpulseResponse
 
 SECTION_NAME = "shoalhaven-river-oallen-ford-to-tallowa-dam"
 
 shoalhaven_df = load_section(SECTION_NAME)
 
-times = shoalhaven_df.index.values
-td = (times[1:]-times[:-1])/60/60/1e9
 
 dfs = split_contiguous(shoalhaven_df)
 
-class Feature_square():
-    """ adds squared value of a feature """
 
-    def __init__(self, variables):
-        if not isinstance(variables, list):
-            raise ValueError('variables should be a list')
-        self.variables = variables
+ccf = sm.tsa.stattools.ccf(dfs[1]["level"], dfs[1]["rain"])
+ccf_2 = sm.tsa.stattools.ccf(10**(dfs[1]["level"]), dfs[1]["rain"])
 
-    def fit(self, X, y=None):
-        return self
+plt.plot(ccf[:24*7])
+plt.xlabel("lag (hours)")
+plt.ylabel("cross correlation factor")
+plt.title("cross correlation between rain and river level")
+plt.show()
 
-    def transform(self, X):
-        for var in self.variables:
-            X[var + "^2"] = X[var] ** 2
-        return X
+# add level difference information
+for df in dfs:
+    df["level_diff"] = df["level"].diff()
 
-class Feature_Difference():
-    """ adds the difference of a feature """
+# add rain impulse
+rainImpulseResponse = RainImpulseResponse()
+rainImpulseResponse.fit(dfs)
+transformed_data = rainImpulseResponse.transform(dfs)
 
-    def __init__(self, variables):
-        if not isinstance(variables, list):
-            raise ValueError('variables should be a list')
-        self.variables = variables
+# merge data
+data = pd.concat(transformed_data, axis=0)
+data.dropna(inplace=True)
 
-    def fit(self, X, y=None):
-        return self
+# apply time series stuff
+forecast_horizon = 5
+all_cols = list(data.columns)
+lag_transformer = LagFeatures(variables=['level']+[n for n in all_cols if 'rain_impulse' in n],
+                              freq=[f'{-forecast_horizon}h'])
 
-    def transform(self, X):
-        for var in self.variables:
-            X[var + "_diff"] = X[var].diff().fillna(method="bfill")
+win_f = WindowFeatures(
+    window=["3h", "10h", "24h", "48h"], functions=["mean"], variables=["level", "rain", "level_diff"]
+)
+data_ts_trans = lag_transformer.fit_transform(data).dropna()
+data_ts_trans = win_f.fit_transform(data_ts_trans)
+data_ts_trans.dropna(inplace=True)
 
-        return X
+y = data_ts_trans[f"level_lag_-{forecast_horizon}h"]
+X = data_ts_trans.drop(columns=[f"level_lag_-{forecast_horizon}h","frame"])
 
-class ARX_Transform():
-    """ adds the difference of a feature """
+tt = pd.concat([y, X], axis=1)
+# calculate the correlation matrix
+corr = tt.corr()
 
-    def __init__(self, variables):
-        if not isinstance(variables, list):
-            raise ValueError('variables should be a list')
-        self.variables = variables
-
-    def fit(self, X, y=None):
-        return self
-
-    def transform(self, X):
-        for var in self.variables:
-            X[var + "_diff"] = X[var].diff().fillna(method="bfill")
-
-        return X
-
-
-# todo: need to not split randomly
-# todo: need to include that we know future inputs or an alternte way of forecasting
-# todo: blah blah blah
-
-X_train, X_test, y_train, y_test = train_test_split(dfs[1][:-10],dfs[1]["level"][10:], test_size=0.2, random_state=42)
-# X_train, X_test, y_train, y_test = train_test_split(dfs[1]["rain"], dfs[1]["level"], test_size=0.2, random_state=42)
-
-pipeline = Pipeline([
-    ("level_difference", Feature_Difference(["level"])),
-    ("squared transformer", Feature_square(["rain", "level"])),
-    ("Scaler", MinMaxScaler()),
-    ("linear regression", LinearRegression())
-])
-
-pipeline.fit(X_train, y_train)
-y_test_pred = pipeline.predict(X_test)
-
-plt.plot(y_test.values[:100])
-plt.plot(y_test_pred[:100])
+# plot the heatmap
+sns.heatmap(corr,
+        xticklabels=corr.columns,
+        yticklabels=corr.columns)
+plt.tight_layout()
 plt.show()
 
 
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42, shuffle=False)
 
-# plt.subplot(2,1,1)
-# plt.plot(shoalhaven_df.index,shoalhaven_df["rain"])
-# plt.ylabel("rainfall (mm) per hour")
-# plt.xlabel("date and time (hour increments)")
-#
-# plt.subplot(2,1,2)
-# plt.plot(shoalhaven_df.index, shoalhaven_df["level"])
-# plt.ylabel("river level (m)")
-# plt.xlabel("date and time (hour increments)")
-#
-# plt.tight_layout()
-# plt.show()
+pipe = Pipeline([
+    ("min max scaling", MinMaxScaler()),
+    # ("linear ridge regression", Ridge(alpha=0.275))
+    ("random forest", RandomForestRegressor(min_samples_leaf=2))
+    # ("KNN", KNeighborsRegressor(n_neighbors=3))
+])
 
+pipe.fit(X_train, y_train)
 
+y_train_pred = pipe.predict(X_train)
+y_test_pred = pipe.predict(X_test)
 
+print("train score", pipe.score(X_train, y_train))
+print("train mse", mean_squared_error(y_train, y_train_pred))
+print("test score ", pipe.score(X_test, y_test))
+print("test mse ", mean_squared_error(y_test, y_test_pred))
+
+plt.plot(y_test.to_numpy())
+plt.plot(y_test_pred)
+plt.title(f"{forecast_horizon}h ahead prediction vs actual")
+plt.show()
 
