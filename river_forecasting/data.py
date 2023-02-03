@@ -36,17 +36,24 @@ def load_section(section_name, file="../data/data_extracted.json"):
 
     return df
 
+class MyClass:
+    def __init__(self, x=1):
+        self.x = x
+        self.transforms = {"x^2":lambda x:x**2}
+    def get_x(self):
+        return self.x
+
+    def transform_x(self):
+        return self.transforms["x^2"](self.x)
+
 class RainImpulseResponse():
     def __init__(self, max_filter_size:int=200):
         self.max_filter_size = max_filter_size
         self.filters = {}
         # self.filter_transforms={"x":lambda x:x,
-        #                         "x^2":lambda x:x**2,
-        #                         "x^3":lambda x:x**3,
-        #                         "exp(x)":lambda x:np.exp(x)}
-        self.filter_transforms={"x":lambda x:x,
-                                "x^3": lambda x: x ** 3,
-                                "10^x":lambda x:10**x}
+        #                         "x^3": lambda x: x ** 3,
+        #                         "10^x":lambda x:10**x}
+        self.filter_transforms = ["x", "x^3", "10^x"]
 
     def fit(self, data:list):
         d_all = pd.concat(data, axis=0)
@@ -55,6 +62,7 @@ class RainImpulseResponse():
         max_rain = d_all["rain"].max()
         min_rain = d_all["rain"].min()
 
+        for ff in self
         for k, v in self.filter_transforms.items():
             filt_t = []
             for d in data:
@@ -90,8 +98,6 @@ class RainImpulseResponse():
         return filter
 
 
-
-
 def split_contiguous(df):
     df['frame'] = (df.index.to_series().diff().dt.seconds > 60 * 60).cumsum()
     list_of_dfs = []
@@ -100,4 +106,12 @@ def split_contiguous(df):
     return list_of_dfs
 
 
+# if __name__=="__main__":
+import dill
+import joblib
 
+my_class = MyClass(x=5)
+print(my_class.transform_x())
+joblib.dump(my_class, "../models/test.pkl")
+my_class2 = joblib.load("../models/test.pkl")
+print(my_class2.transform_x())

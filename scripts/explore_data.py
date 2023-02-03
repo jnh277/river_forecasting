@@ -9,6 +9,8 @@ import statsmodels.api as sm
 from sklearn.metrics import mean_squared_error
 import pandas as pd
 import seaborn as sns
+import joblib
+import os
 import numpy as np
 
 from feature_engine.timeseries.forecasting import LagFeatures, WindowFeatures
@@ -38,6 +40,10 @@ for df in dfs:
 # add rain impulse
 rainImpulseResponse = RainImpulseResponse()
 rainImpulseResponse.fit(dfs)
+
+joblib.dump(rainImpulseResponse, os.path.join("../models", SECTION_NAME, "rainImpulseResponse.pkl"))
+rainImpulseResponse = joblib.load(os.path.join("../models", SECTION_NAME, "rainImpulseResponse.pkl"))
+
 transformed_data = rainImpulseResponse.transform(dfs)
 
 # merge data
@@ -77,11 +83,14 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_
 pipe = Pipeline([
     ("min max scaling", MinMaxScaler()),
     # ("linear ridge regression", Ridge(alpha=0.275))
-    ("random forest", RandomForestRegressor(min_samples_leaf=2))
-    # ("KNN", KNeighborsRegressor(n_neighbors=3))
+    # ("random forest", RandomForestRegressor(min_samples_leaf=2))
+    ("KNN", KNeighborsRegressor(n_neighbors=3))
 ])
 
 pipe.fit(X_train, y_train)
+
+joblib.dump(pipe, os.path.join("../models", SECTION_NAME, "pipe.pkl"))
+pipe = joblib.load(os.path.join("../models", SECTION_NAME, "pipe.pkl"))
 
 y_train_pred = pipe.predict(X_train)
 y_test_pred = pipe.predict(X_test)
@@ -95,4 +104,7 @@ plt.plot(y_test.to_numpy())
 plt.plot(y_test_pred)
 plt.title(f"{forecast_horizon}h ahead prediction vs actual")
 plt.show()
+
+## test saving
+
 
