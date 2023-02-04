@@ -11,17 +11,19 @@ import pandas as pd
 import seaborn as sns
 import joblib
 import os
-import numpy as np
 
-from feature_engine.timeseries.forecasting import LagFeatures, WindowFeatures
-from river_forecasting.data import load_section, split_contiguous, RainImpulseResponse
+from river_forecasting.data import load_training_data
+from river_forecasting.processing import RainImpulseResponseFilter
+from river_forecasting.features import TimeSeriesFeatures
+from river_forecasting import model_manager
 
 SECTION_NAME = "shoalhaven-river-oallen-ford-to-tallowa-dam"
 
-shoalhaven_df = load_section(SECTION_NAME)
+save_pipe = True
 
-
-dfs = split_contiguous(shoalhaven_df)
+## This sectoin is loading training data
+dfs = load_training_data(SECTION_NAME)
+### end of loading training data
 
 
 ccf = sm.tsa.stattools.ccf(dfs[1]["level"], dfs[1]["rain"])
@@ -33,38 +35,32 @@ plt.ylabel("cross correlation factor")
 plt.title("cross correlation between rain and river level")
 plt.show()
 
-# add level difference information
-for df in dfs:
-    df["level_diff"] = df["level"].diff()
+# Filters
+rainFIR = RainImpulseResponseFilter()
+rainFIR.fit_filter(dfs)
 
-# add rain impulse
-rainImpulseResponse = RainImpulseResponse()
-rainImpulseResponse.fit(dfs)
+# model_manager.save_rain_fir(rainFIR=rainFIR, section_name=SECTION_NAME)
+# rainFIR = model_manager.load_rain_fir(section_name=SECTION_NAME)
+transformed_data = rainFIR.apply_filter(dfs)
+### END Filters
 
-joblib.dump(rainImpulseResponse, os.path.join("../models", SECTION_NAME, "rainImpulseResponse.pkl"))
-rainImpulseResponse = joblib.load(os.path.join("../models", SECTION_NAME, "rainImpulseResponse.pkl"))
 
-transformed_data = rainImpulseResponse.transform(dfs)
 
 # merge data
 data = pd.concat(transformed_data, axis=0)
 data.dropna(inplace=True)
 
-# apply time series stuff
-forecast_horizon = 5
-all_cols = list(data.columns)
-lag_transformer = LagFeatures(variables=['level']+[n for n in all_cols if 'rain_impulse' in n],
-                              freq=[f'{-forecast_horizon}h'])
+# TIME SERIES FEATURES
+forecast_step = 5
+time_series_features = TimeSeriesFeatures(forecast_step=forecast_step)
+model_manager.save_ts_feature(forecast_step=forecast_step,
+                              time_series_features=time_series_features,
+                              section_name=SECTION_NAME)
+time_series_features = model_manager.load_ts_feature(forecast_step=forecast_step, section_name=SECTION_NAME)
+X, y = time_series_features.fit_transform(data)
 
-win_f = WindowFeatures(
-    window=["3h", "10h", "24h", "48h"], functions=["mean"], variables=["level", "rain", "level_diff"]
-)
-data_ts_trans = lag_transformer.fit_transform(data).dropna()
-data_ts_trans = win_f.fit_transform(data_ts_trans)
-data_ts_trans.dropna(inplace=True)
 
-y = data_ts_trans[f"level_lag_-{forecast_horizon}h"]
-X = data_ts_trans.drop(columns=[f"level_lag_-{forecast_horizon}h","frame"])
+## END TIME SERIES
 
 tt = pd.concat([y, X], axis=1)
 # calculate the correlation matrix
@@ -102,7 +98,7 @@ print("test mse ", mean_squared_error(y_test, y_test_pred))
 
 plt.plot(y_test.to_numpy())
 plt.plot(y_test_pred)
-plt.title(f"{forecast_horizon}h ahead prediction vs actual")
+plt.title(f"{forecast_step}h ahead prediction vs actual")
 plt.show()
 
 ## test saving
