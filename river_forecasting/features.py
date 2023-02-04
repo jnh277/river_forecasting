@@ -39,8 +39,12 @@ class TimeSeriesFeatures():
         data_ts_trans = self.win_f.fit_transform(data_ts_trans)
         data_ts_trans.dropna(inplace=True)
 
-        y = data_ts_trans[f"level_lag_-{self.forecast_step}h"]
-        X = data_ts_trans.drop(columns=[f"level_lag_-{self.forecast_step}h", "frame"])
+        if self.forecast_step: # it not 0
+            y = data_ts_trans[f"level_lag_-{self.forecast_step}h"]
+            X = data_ts_trans.drop(columns=[f"level_lag_-{self.forecast_step}h", "frame"])
+        else:
+            y = data_ts_trans[f"level_lag_{self.forecast_step}h"]
+            X = data_ts_trans.drop(columns=[f"level_lag_{self.forecast_step}h", "frame"])
 
         return X, y
 

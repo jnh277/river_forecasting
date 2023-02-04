@@ -1,25 +1,18 @@
 import matplotlib.pyplot as plt
-from sklearn.pipeline import Pipeline
 from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import MinMaxScaler, PolynomialFeatures
-from sklearn.linear_model import LinearRegression, Ridge
-from sklearn.ensemble import RandomForestRegressor
-from sklearn.neighbors import KNeighborsRegressor
 import statsmodels.api as sm
 from sklearn.metrics import mean_squared_error
 import pandas as pd
 import seaborn as sns
-import joblib
-import os
 
 from river_forecasting.data import load_training_data
 from river_forecasting.processing import RainImpulseResponseFilter
 from river_forecasting.features import TimeSeriesFeatures
 from river_forecasting import model_manager
+from river_forecasting.models import init_scikit_pipe, RegressionModelType
 
 SECTION_NAME = "shoalhaven-river-oallen-ford-to-tallowa-dam"
 
-save_pipe = True
 
 ## This sectoin is loading training data
 dfs = load_training_data(SECTION_NAME)
@@ -51,7 +44,7 @@ data = pd.concat(transformed_data, axis=0)
 data.dropna(inplace=True)
 
 # TIME SERIES FEATURES
-forecast_step = 5
+forecast_step = 0
 time_series_features = TimeSeriesFeatures(forecast_step=forecast_step)
 model_manager.save_ts_feature(forecast_step=forecast_step,
                               time_series_features=time_series_features,
@@ -76,17 +69,12 @@ plt.show()
 
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42, shuffle=False)
 
-pipe = Pipeline([
-    ("min max scaling", MinMaxScaler()),
-    # ("linear ridge regression", Ridge(alpha=0.275))
-    # ("random forest", RandomForestRegressor(min_samples_leaf=2))
-    ("KNN", KNeighborsRegressor(n_neighbors=3))
-])
+pipe = init_scikit_pipe(RegressionModelType.KNN)
 
 pipe.fit(X_train, y_train)
 
-joblib.dump(pipe, os.path.join("../models", SECTION_NAME, "pipe.pkl"))
-pipe = joblib.load(os.path.join("../models", SECTION_NAME, "pipe.pkl"))
+# joblib.dump(pipe, os.path.join("../models", SECTION_NAME, "pipe.pkl"))
+# pipe = joblib.load(os.path.join("../models", SECTION_NAME, "pipe.pkl"))
 
 y_train_pred = pipe.predict(X_train)
 y_test_pred = pipe.predict(X_test)

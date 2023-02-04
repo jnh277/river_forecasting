@@ -4,10 +4,35 @@
 """
 from river_forecasting.processing import RainImpulseResponseFilter
 from river_forecasting.features import TimeSeriesFeatures
+from river_forecasting.models import RegressionModelType
+from sklearn.pipeline import Pipeline
 import os.path as Path
 import os
 import joblib
 
+
+def save_trained_pipe(*, pipe: Pipeline,
+                      section_name: str,
+                      forecast_step: int,
+                      regression_model_type: RegressionModelType,
+                      extra_str: str = "") -> None:
+    section_folder = os.path.join("../models/", section_name)
+    make_folder(folder=section_folder)
+    step_folder = os.path.join(section_folder, f"step_{forecast_step}hour")
+    make_folder(step_folder)
+    filepath = Path.join(step_folder, f"model_{regression_model_type.name}{extra_str}.pkl")
+    remove_old_pipe(filepath=filepath)
+    joblib.dump(pipe, filename=filepath)
+
+def load_trained_pipe(*, section_name: str,
+                      forecast_step: int,
+                      regression_model_type: RegressionModelType,
+                      extra_str: str = "")->Pipeline:
+    section_folder = os.path.join("../models/", section_name)
+    step_folder = os.path.join(section_folder, f"step_{forecast_step}hour")
+    make_folder(step_folder)
+    filepath = Path.join(step_folder, f"model_{regression_model_type.name}{extra_str}.pkl")
+    return joblib.load(filename=filepath)
 
 def save_rain_fir(*, rainFIR: RainImpulseResponseFilter, section_name: str):
     """
