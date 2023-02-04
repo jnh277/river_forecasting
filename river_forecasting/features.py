@@ -36,15 +36,16 @@ class TimeSeriesFeatures():
                                                 freq=[f'{-self.forecast_step}h'])
 
         data_ts_trans = self.lag_transformer_train.fit_transform(data).dropna()
+        self.lag_transformer_pred.fit(data)
         data_ts_trans = self.win_f.fit_transform(data_ts_trans)
         data_ts_trans.dropna(inplace=True)
 
         if self.forecast_step: # it not 0
             y = data_ts_trans[f"level_lag_-{self.forecast_step}h"]
-            X = data_ts_trans.drop(columns=[f"level_lag_-{self.forecast_step}h", "frame"])
+            X = data_ts_trans.drop(columns=[f"level_lag_-{self.forecast_step}h"])
         else:
             y = data_ts_trans[f"level_lag_{self.forecast_step}h"]
-            X = data_ts_trans.drop(columns=[f"level_lag_{self.forecast_step}h", "frame"])
+            X = data_ts_trans.drop(columns=[f"level_lag_{self.forecast_step}h"])
 
         return X, y
 

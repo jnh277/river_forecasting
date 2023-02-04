@@ -2,7 +2,9 @@ from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import MinMaxScaler, PolynomialFeatures
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.neighbors import KNeighborsRegressor
+from sklearn.linear_model import LinearRegression, Ridge
 from enum import Enum
+import xgboost as xg
 
 """
     Module for machline learning pipes/models to perform training and prediction after
@@ -22,6 +24,9 @@ rainfall recorded at time t will impact river level at time t
 class RegressionModelType(Enum):
     KNN = 0,
     RF = 1,
+    XGBOOST = 2,
+    LINEAR = 3,
+    RIDGE = 4,
 
 def init_scikit_pipe(regression_model: RegressionModelType, **kwargs):
     if regression_model==RegressionModelType.KNN:
@@ -32,6 +37,25 @@ def init_scikit_pipe(regression_model: RegressionModelType, **kwargs):
     elif regression_model==RegressionModelType.RF:
         return Pipeline([
             ("min max scaling", MinMaxScaler()),
-            ("random forest", RandomForestRegressor(min_samples_leaf=2, max_samples=3))
+            ("random forest", RandomForestRegressor(min_samples_leaf=2))
         ])
+    elif regression_model==RegressionModelType.XGBOOST:
+        return Pipeline([
+            ("min max scaling", MinMaxScaler()),
+            ("xgboost", xg.XGBRegressor(objective ='reg:squarederror', n_estimators=100))
+        ])
+    elif regression_model==RegressionModelType.LINEAR:
+        return Pipeline([
+            ("min max scaling", MinMaxScaler()),
+            ("Polynomial", PolynomialFeatures(degree=(1, 3), include_bias=False)),
+            ("LinReg", LinearRegression())
+        ])
+    elif regression_model==RegressionModelType.RIDGE:
+        return Pipeline([
+            ("min max scaling", MinMaxScaler()),
+            ("Polynomial", PolynomialFeatures(degree=(1,3), include_bias=False)),
+            ("Ridge", Ridge(alpha=1.0))
+        ])
+    else:
+        raise Exception(ValueError)
 

@@ -14,6 +14,12 @@ from river_forecasting import model_manager
 from river_forecasting.features import TimeSeriesFeatures
 from river_forecasting.models import init_scikit_pipe, RegressionModelType
 
+regression_model_types = [RegressionModelType.KNN,
+                          RegressionModelType.RF,
+                          RegressionModelType.XGBOOST,]
+                          # RegressionModelType.LINEAR,
+                          # RegressionModelType.RIDGE]
+
 def train_model(*, section_name: str, forecast_horizon: int=5):
     """
     Train ml models for a river section
@@ -47,37 +53,42 @@ def train_model(*, section_name: str, forecast_horizon: int=5):
                                       section_name=section_name)
 
         # split data into test and train
-        X_train, X_test, y_train, y_test = train_test_split(X, y,
+        X_train_, X_test_, y_train_, y_test_ = train_test_split(X, y,
                                                             test_size=0.2,
                                                             random_state=42,
                                                             shuffle=False)
 
-        regression_model_type = RegressionModelType.KNN
 
-        pipe = init_scikit_pipe(regression_model_type)
-        pipe.fit(X_train, y_train)
+        for regression_model_type in regression_model_types:
+            X_train = X_train_.copy()
+            y_train = y_train_.copy()
+            X_test = X_test_.copy()
+            y_test = y_test_.copy()
 
-        # save fit pipe
-        model_manager.save_trained_pipe(pipe=pipe, section_name=section_name,
-                                        forecast_step=forecast_step,
-                                        regression_model_type=regression_model_type)
+            pipe = init_scikit_pipe(regression_model_type)
+            pipe.fit(X_train, y_train)
 
-        # evaluate pipe
-        y_train_pred = pipe.predict(X_train)
-        y_test_pred = pipe.predict(X_test)
+            # save fit pipe
+            model_manager.save_trained_pipe(pipe=pipe, section_name=section_name,
+                                            forecast_step=forecast_step,
+                                            regression_model_type=regression_model_type)
 
-        model_info_dict = {
-            "regression_model_type":regression_model_type.name,
-            "forecast_step":forecast_step,
-            "section_name":section_name,
-            "train score":pipe.score(X_train, y_train),
-            "train mse":mean_squared_error(y_train, y_train_pred),
-            "train mae":mean_absolute_error(y_train, y_train_pred),
-            "test score": pipe.score(X_test, y_test),
-            "test mse": mean_squared_error(y_test, y_test_pred),
-            "test mae": mean_absolute_error(y_test, y_test_pred),
-        }
-        model_info_dicts.append(model_info_dict)
+            # evaluate pipe
+            y_train_pred = pipe.predict(X_train)
+            y_test_pred = pipe.predict(X_test)
+
+            model_info_dict = {
+                "regression_model_type":regression_model_type.name,
+                "forecast_step":forecast_step,
+                "section_name":section_name,
+                "train score":pipe.score(X_train, y_train),
+                "train mse":mean_squared_error(y_train, y_train_pred),
+                "train mae":mean_absolute_error(y_train, y_train_pred),
+                "test score": pipe.score(X_test, y_test),
+                "test mse": mean_squared_error(y_test, y_test_pred),
+                "test mae": mean_absolute_error(y_test, y_test_pred),
+            }
+            model_info_dicts.append(model_info_dict)
 
     model_info = pd.DataFrame(model_info_dicts)
     model_info.to_csv(os.path.join("../models", section_name, "model_info.csv"))

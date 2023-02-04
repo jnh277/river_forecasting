@@ -43,6 +43,6 @@ def split_contiguous(df):
     df['frame'] = (df.index.to_series().diff().dt.seconds > 60 * 60).cumsum()
     list_of_dfs = []
     for ct, data in df.groupby('frame'):
-        list_of_dfs.append(data)
+        list_of_dfs.append(data.drop(columns=["frame"]))
     return list_of_dfs
 
