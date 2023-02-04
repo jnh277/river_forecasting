@@ -36,7 +36,7 @@ class TimeSeriesFeatures():
                                                 freq=[f'{-self.forecast_step}h'])
 
         data_ts_trans = self.lag_transformer_train.fit_transform(data).dropna()
-        self.lag_transformer_pred.fit(data)
+        # self.lag_transformer_pred.fit(data)
         data_ts_trans = self.win_f.fit_transform(data_ts_trans)
         data_ts_trans.dropna(inplace=True)
 
@@ -53,7 +53,7 @@ class TimeSeriesFeatures():
         """
         Transforms the input data and returns X for prediction
         """
-        data_ts_trans = self.lag_transformer_pred.transform(data).dropna()
-        X = self.win_f.transform(data_ts_trans).dropna()
+        data_ts_trans = self.lag_transformer_pred.fit_transform(data).dropna()
+        X = self.win_f.fit_transform(data_ts_trans).dropna()
 
         return X
