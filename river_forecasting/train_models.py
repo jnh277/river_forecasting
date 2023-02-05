@@ -7,18 +7,27 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics import mean_squared_error, mean_absolute_error
 import os
 from tqdm import tqdm
+import numpy as np
 
 from river_forecasting.data import load_training_data
 from river_forecasting.processing import RainImpulseResponseFilter
 from river_forecasting import model_manager
 from river_forecasting.features import TimeSeriesFeatures
-from river_forecasting.models import init_scikit_pipe, RegressionModelType
+from river_forecasting.models import init_scikit_pipe, RegressionModelType, simple_std_eval
+
 
 regression_model_types = [RegressionModelType.KNN,
                           RegressionModelType.RF,
                           RegressionModelType.XGBOOST,]
                           # RegressionModelType.LINEAR,
                           # RegressionModelType.RIDGE]
+
+# def simple_std_model(y_pred, y, level):
+#     inds = np.abs(y_pred - level) > 0.05
+#     steady_std = np.std(y_pred[inds] - y[inds])
+#     non_steady_std = np.std(y_pred[~inds] - y[~inds])
+#
+#     return steady_std, non_steady_std
 
 def train_model(*, section_name: str, forecast_horizon: int=5):
     """
@@ -42,7 +51,7 @@ def train_model(*, section_name: str, forecast_horizon: int=5):
     # build models for each forecast step up to forecast horizon
 
     model_info_dicts = []
-    for forecast_step in tqdm(range(forecast_horizon+1), "Training models to forecast over horizon"):
+    for forecast_step in tqdm(range(1, forecast_horizon+1), "Training models to forecast over horizon"):
         # time series features
         time_series_features = TimeSeriesFeatures(forecast_step=forecast_step)
         X, y = time_series_features.fit_transform(data)
@@ -77,6 +86,8 @@ def train_model(*, section_name: str, forecast_horizon: int=5):
             y_train_pred = pipe.predict(X_train)
             y_test_pred = pipe.predict(X_test)
 
+            steady_std, non_steady_std = simple_std_eval(X_test=X_test, y_test=y_test, y_test_pred=y_test_pred)
+
             model_info_dict = {
                 "regression_model_type":regression_model_type.name,
                 "forecast_step":forecast_step,
@@ -87,6 +98,8 @@ def train_model(*, section_name: str, forecast_horizon: int=5):
                 "test score": pipe.score(X_test, y_test),
                 "test mse": mean_squared_error(y_test, y_test_pred),
                 "test mae": mean_absolute_error(y_test, y_test_pred),
+                "steady std": steady_std,
+                "non steady std": non_steady_std
             }
             model_info_dicts.append(model_info_dict)
 

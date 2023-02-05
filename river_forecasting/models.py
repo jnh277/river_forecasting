@@ -5,6 +5,8 @@ from sklearn.neighbors import KNeighborsRegressor
 from sklearn.linear_model import LinearRegression, Ridge
 from enum import Enum
 import xgboost as xg
+import pandas as pd
+import numpy as np
 
 """
     Module for machline learning pipes/models to perform training and prediction after
@@ -20,6 +22,21 @@ rainfall recorded at time t will impact river level at time t
 
 
 """
+
+def simple_std_eval(*,
+                    X_test: pd.DataFrame,
+                    y_test_pred: pd.DataFrame,
+                    y_test: pd.DataFrame) -> (float, float):
+
+    ind = (X_test["level_window_3h_mean"]-0.2 > y_test) | (y_test > X_test["level_window_3h_mean"]+0.1)
+    error = y_test_pred - y_test
+
+    steady_std = np.std(error[~ind])
+    non_steady_std = np.std(error[ind])
+
+    return steady_std, non_steady_std
+
+
 
 class RegressionModelType(Enum):
     KNN = 0,
