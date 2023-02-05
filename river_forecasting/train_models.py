@@ -18,9 +18,9 @@ from river_forecasting.models import init_scikit_pipe, RegressionModelType, simp
 
 regression_model_types = [RegressionModelType.KNN,
                           RegressionModelType.RF,
-                          RegressionModelType.XGBOOST,]
+                          RegressionModelType.XGBOOST,
                           # RegressionModelType.LINEAR,
-                          # RegressionModelType.RIDGE]
+                          RegressionModelType.RIDGE]
 
 # def simple_std_model(y_pred, y, level):
 #     inds = np.abs(y_pred - level) > 0.05
@@ -73,6 +73,7 @@ def train_model(*, section_name: str, forecast_horizon: int=5):
             y_train = y_train_.copy()
             X_test = X_test_.copy()
             y_test = y_test_.copy()
+
 
             pipe = init_scikit_pipe(regression_model_type)
             pipe.fit(X_train, y_train)
