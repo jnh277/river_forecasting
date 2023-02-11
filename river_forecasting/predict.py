@@ -86,6 +86,7 @@ def validate():
 if __name__ == "__main__":
     from river_forecasting.data import load_training_data
     import matplotlib.pyplot as plt
+    import time
 
     SECTION_NAME = "shoalhaven-river-oallen-ford-to-tallowa-dam"
 
@@ -93,7 +94,8 @@ if __name__ == "__main__":
 
     data = load_training_data(SECTION_NAME)[1]
 
-    current = len(data)-512
+    # current = len(data)-400
+    current = 300
     df_past = data[:current].copy()
     df_future = data[current:current + 24].copy()
     future_rainfall = df_future["rain"].copy()
@@ -107,15 +109,22 @@ if __name__ == "__main__":
 
     index = data[:current + 24].index
 
+
+    t1 = time.perf_counter()
     preds, upper, lower = predictor.predict(level_history=pd.Series(level_history, index=df_past.index),
                                             rain_history=pd.Series(rain_history, index=df_past.index),
                                             level_diff_history=pd.Series(level_diff_history, index=df_past.index),
                                             future_rainfall=pd.Series(rain_future, index=df_future.index))
 
+
+    t2 = time.perf_counter()
+    print("time to predict ",t2-t1)
+
+
     plt.plot(level_future, label="True")
     plt.plot(pd.Series(preds, index=level_future.index), label="predicted")
-    plt.plot(pd.Series(lower, index=level_future.index), label="lower", linestyle='--', color='g')
-    plt.plot(pd.Series(upper, index=level_future.index), label="upper", linestyle='--', color='r')
+    # plt.plot(pd.Series(lower, index=level_future.index), label="lower", linestyle='--', color='g')
+    # plt.plot(pd.Series(upper, index=level_future.index), label="upper", linestyle='--', color='r')
     # plt.fill_between(x=preds.index, y1=pd.Series(lower, index=level_future.index),y2=pd.Series(upper, index=level_future.index), alphe=0.2)
     plt.title("predictions for a 24 hour horizon")
     plt.xlabel("time in future")

@@ -17,7 +17,7 @@ class TimeSeriesFeatures():
                  window_features: list[str] = ("level", "rain", "level_diff"),
                  windows: list[str] = ("3h", "10h", "24h", "48h")):
         self.forecast_step = forecast_step
-        self.window_features = list(window_features)
+        self.window_features = list(window_features) + [f"rain_lag_-{forecast_step}h"]
         self.windows = list(windows)
         self.win_f = WindowFeatures(
             window=self.windows, functions=["mean"], variables=self.window_features
@@ -29,7 +29,7 @@ class TimeSeriesFeatures():
             returns X and y for training
         """
         all_cols = list(data.columns)
-        self.lag_features = [n for n in all_cols if 'rain_impulse' in n]
+        self.lag_features = [n for n in all_cols if 'rain_impulse' in n] + ["rain"]
         self.lag_transformer_train = LagFeatures(variables=['level'] + self.lag_features,
                                                  freq=[f'{-self.forecast_step}h'])
         self.lag_transformer_pred = LagFeatures(variables=self.lag_features,
