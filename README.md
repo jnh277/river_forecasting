@@ -7,10 +7,10 @@ Project for forecasting river flows based on rainfall
 ### Data sources
 
 - WaterOnline http://www.bom.gov.au/waterdata/?fbclid=IwAR13h11ahx7RzoIxJyVHd-3Gho5_aNep6TT-vqk6Arp8CFyCzDijZ5hTPIE
-  - Franklin River FRANKLIN AT FINCHAM - AT MT FINCHAM TRACK
+  - explore what other sections and gauge combinations could be good
 - WikiRiver
-  - Get updated data
-- BOM provided barrington river data
+  - Get updated _data
+- BOM provided barrington river data_
 
 ### Modelling ideas
 
@@ -40,3 +40,8 @@ Project for forecasting river flows based on rainfall
 
 
 ## Done
+
+### Datasources
+
+- functionality to use data from water data online
+- downloaded and tried the Franklin at fincham data
