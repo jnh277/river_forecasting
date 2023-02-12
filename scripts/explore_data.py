@@ -11,11 +11,11 @@ from river_forecasting.features import TimeSeriesFeatures
 from river_forecasting import model_manager
 from river_forecasting.models import init_scikit_pipe, RegressionModelType
 
-SECTION_NAME = "shoalhaven-river-oallen-ford-to-tallowa-dam"
+SECTION_NAME = "franlin_at_fincham"
 
 
 ## This sectoin is loading training data
-dfs = load_training_data(SECTION_NAME)
+dfs = load_training_data(SECTION_NAME, source="waterdataonline")
 ### end of loading training data
 
 
@@ -32,6 +32,8 @@ plt.show()
 rainFIR = RainImpulseResponseFilter()
 rainFIR.fit_filter(dfs)
 
+
+1/0
 # model_manager.save_rain_fir(rainFIR=rainFIR, section_name=SECTION_NAME)
 # rainFIR = model_manager.load_rain_fir(section_name=SECTION_NAME)
 transformed_data = rainFIR.apply_filter(dfs)

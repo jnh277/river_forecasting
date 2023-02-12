@@ -18,7 +18,10 @@ Project for forecasting river flows based on rainfall
 - Quantile regression
 - variational inference
 - impulse response neural networks
-
+- hyperparmeter search
+- feature selection
+- multi rain inputs
+- upstream river gauge inputs
 
 ### Integrations
 

@@ -29,12 +29,12 @@ regression_model_types = [RegressionModelType.KNN,
 #
 #     return steady_std, non_steady_std
 
-def train_model(*, section_name: str, forecast_horizon: int=5):
+def train_model(*, section_name: str, forecast_horizon: int=5, source="wikiriver"):
     """
     Train ml models for a river section
     """
     # load the data and do some initial processing and checks
-    dfs = load_training_data(section_name=section_name)
+    dfs = load_training_data(section_name=section_name, source=source)
 
     # apply a couple of impulse response filters to the data
     rainFIR = RainImpulseResponseFilter()
@@ -109,9 +109,9 @@ def train_model(*, section_name: str, forecast_horizon: int=5):
 
 
 if __name__=="__main__":
-    SECTION_NAME = "shoalhaven-river-oallen-ford-to-tallowa-dam"
+    SECTION_NAME = "franklin_at_fincham"
     forecast_horizon=24
-    train_model(section_name=SECTION_NAME, forecast_horizon=24)
+    train_model(section_name=SECTION_NAME, forecast_horizon=24, source="waterdataonline")
 
 
 
