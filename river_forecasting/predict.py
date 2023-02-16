@@ -67,15 +67,6 @@ class Predictor():
             pred = self.ml_pipes[forecast_step].predict(X_curr)
             preds.append(pred.item())
 
-            is_steady = (pred > X_curr["level_window_3h_mean"].values-0.2) & (pred < X_curr["level_window_3h_mean"].values+0.1)
-
-            if is_steady:
-                std = self.model_info[self.model_info["forecast_step"] == forecast_step]["steady std"]
-            else:
-                std = self.model_info[self.model_info["forecast_step"] == forecast_step]["non steady std"]
-            upper.append(pred + 2 * std)
-            lower.append(pred - 2 * std)
-
         return preds, upper, lower
 
 
@@ -88,16 +79,19 @@ if __name__ == "__main__":
     import matplotlib.pyplot as plt
     import time
 
-    SECTION_NAME = "shoalhaven-river-oallen-ford-to-tallowa-dam"
+    # SECTION_NAME = "shoalhaven-river-oallen-ford-to-tallowa-dam"
+    # data = load_training_data(SECTION_NAME)[1]
+    SECTION_NAME = "franklin_at_fincham"
+    data = load_training_data(section_name=SECTION_NAME, source="waterdataonline")[-1]
 
     predictor = Predictor(section_name=SECTION_NAME)
 
-    data = load_training_data(SECTION_NAME)[1]
+    forecast_horizon = 96
 
     # current = len(data)-400
     current = 300
     df_past = data[:current].copy()
-    df_future = data[current:current + 24].copy()
+    df_future = data[current:current + forecast_horizon].copy()
     future_rainfall = df_future["rain"].copy()
 
     rain_history = df_past["rain"].to_list()
@@ -107,7 +101,7 @@ if __name__ == "__main__":
 
     level_future = df_future["level"].copy()
 
-    index = data[:current + 24].index
+    index = data[:current + forecast_horizon].index
 
 
     t1 = time.perf_counter()
@@ -123,10 +117,10 @@ if __name__ == "__main__":
 
     plt.plot(level_future, label="True")
     plt.plot(pd.Series(preds, index=level_future.index), label="predicted")
-    # plt.plot(pd.Series(lower, index=level_future.index), label="lower", linestyle='--', color='g')
-    # plt.plot(pd.Series(upper, index=level_future.index), label="upper", linestyle='--', color='r')
+    plt.plot(pd.Series(lower, index=level_future.index), label="lower", linestyle='--', color='g')
+    plt.plot(pd.Series(upper, index=level_future.index), label="upper", linestyle='--', color='r')
     # plt.fill_between(x=preds.index, y1=pd.Series(lower, index=level_future.index),y2=pd.Series(upper, index=level_future.index), alphe=0.2)
-    plt.title("predictions for a 24 hour horizon")
+    plt.title(f"predictions for a {forecast_horizon} hour horizon")
     plt.xlabel("time in future")
     plt.ylabel("river level (m)")
     plt.legend()
