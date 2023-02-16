@@ -84,6 +84,9 @@ if __name__ == "__main__":
     SECTION_NAME = "franklin_at_fincham"
     data = load_training_data(section_name=SECTION_NAME, source="waterdataonline")[-1]
 
+    data.to_csv(os.path.join("../models", SECTION_NAME, "val_data.csv"))
+    test = pd.read_csv(os.path.join("../models", SECTION_NAME, "val_data.csv"))
+
     predictor = Predictor(section_name=SECTION_NAME)
 
     forecast_horizon = 96
@@ -125,6 +128,7 @@ if __name__ == "__main__":
     plt.ylabel("river level (m)")
     plt.legend()
     plt.show()
+
 
     # x = pd.Series(level_history, index=df_past.index).to_json()
     # pd.read_json(x, typ='series', orient='records')

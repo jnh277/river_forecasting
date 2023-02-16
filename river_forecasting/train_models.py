@@ -17,17 +17,11 @@ from river_forecasting.models import init_scikit_pipe, RegressionModelType, simp
 
 
 regression_model_types = [RegressionModelType.KNN,
-                          RegressionModelType.RF,
+                          # RegressionModelType.RF,
                           RegressionModelType.XGBOOST,
                           # RegressionModelType.LINEAR,
                           RegressionModelType.RIDGE]
 
-# def simple_std_model(y_pred, y, level):
-#     inds = np.abs(y_pred - level) > 0.05
-#     steady_std = np.std(y_pred[inds] - y[inds])
-#     non_steady_std = np.std(y_pred[~inds] - y[~inds])
-#
-#     return steady_std, non_steady_std
 
 def train_model(*, section_name: str, forecast_horizon: int=5, source="wikiriver"):
     """
@@ -87,7 +81,7 @@ def train_model(*, section_name: str, forecast_horizon: int=5, source="wikiriver
             y_train_pred = pipe.predict(X_train)
             y_test_pred = pipe.predict(X_test)
 
-            steady_std, non_steady_std = simple_std_eval(X_test=X_test, y_test=y_test, y_test_pred=y_test_pred)
+            # steady_std, non_steady_std = simple_std_eval(X_test=X_test, y_test=y_test, y_test_pred=y_test_pred)
 
             model_info_dict = {
                 "regression_model_type":regression_model_type.name,
@@ -99,8 +93,6 @@ def train_model(*, section_name: str, forecast_horizon: int=5, source="wikiriver
                 "test score": pipe.score(X_test, y_test),
                 "test mse": mean_squared_error(y_test, y_test_pred),
                 "test mae": mean_absolute_error(y_test, y_test_pred),
-                "steady std": steady_std,
-                "non steady std": non_steady_std
             }
             model_info_dicts.append(model_info_dict)
 
@@ -110,8 +102,8 @@ def train_model(*, section_name: str, forecast_horizon: int=5, source="wikiriver
 
 if __name__=="__main__":
     SECTION_NAME = "franklin_at_fincham"
-    forecast_horizon=24
-    train_model(section_name=SECTION_NAME, forecast_horizon=24, source="waterdataonline")
+    forecast_horizon=96
+    train_model(section_name=SECTION_NAME, forecast_horizon=forecast_horizon, source="waterdataonline")
 
 
 

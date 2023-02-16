@@ -1,0 +1,25 @@
+[build-system]
+build-backend = "setuptools.build_meta"
+requires = ["setuptools>=61.0", "setuptools-git-versioning<2"]
+
+[project]
+dynamic = ["dependencies", "version"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: GNU GENERAL PUBLIC LICENSE",
+    "Operating System :: OS Independent",]
+description = "River forecasting package"
+name = "river_forecasting"
+readme = "README.md"
+requires-python = ">=3.9"
+[[project.authors]]
+email = "johannes.n.hendriks@gmail.com"
+name = "johannes Hendriks"
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["river_forecasting"]
+exclude = ["data", "models", "app"]
+[tool.setuptools.dynamic]
+dependencies = {file=["requirements.txt"]}
+[tool.setuptools-git-versioning]
+enabled = true
