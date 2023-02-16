@@ -6,7 +6,7 @@ Project for forecasting river flows based on rainfall
 
 ### Utility
 
-- steamlit app 
+- improve steamlit app 
 - remove hardcoding of test/train split value
 - during training save the final decent contiguous section as validation data
 
@@ -47,6 +47,11 @@ Project for forecasting river flows based on rainfall
 
 
 ## Done
+
+### Utility
+
+- made streamlit app
+- made package installable and version tracked
 
 ### Datasources
 
