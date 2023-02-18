@@ -1,7 +1,6 @@
 # River Forecasting
 Project for forecasting river flows based on rainfall
 
-
 ## To do
 
 ### Utility
@@ -9,6 +8,7 @@ Project for forecasting river flows based on rainfall
 - improve steamlit app 
 - remove hardcoding of test/train split value
 - during training save the final decent contiguous section as validation data
+- better test train split for time series data
 
 ### Data sources
 
@@ -21,39 +21,52 @@ Project for forecasting river flows based on rainfall
 ### Modelling ideas
 
 - Monotonically constrained models
-- Quantile regression
-- variational inference
+- Quantile regression for random forests
+- Quantile regression for xgboost when it becomes available (or try this? https://towardsdatascience.com/confidence-intervals-for-xgboost-cac2955a8fde)
+- variational inference (less keen on this)
 - impulse response neural networks
-- hyperparmeter search
-- feature selection
+- hyperparmeter search (HIGH)
+- feature selection (HIGH)
 - multi rain inputs
 - upstream river gauge inputs
-- compare current franklin results with longer dataset
+- compare current franklin results with longer dataset (HIGH)
+- EBM models (MED)
 
 ### Integrations
 
-- Openweather API
+- Openweather API (HIGH)
 - WikiRiver
 
 
 ### Software design
 
 - Make package installable
-  - Pyproject.toml
   - MANIFEST.in
-  - Versioning
 - API?
+- config.yaml (MED)
+- TESTS (HIGH)
 
 
 
 ## Done
 
+### Software design
+- make package installable
+  - Pyproject.toml
+  - Versioning
+
 ### Utility
 
 - made streamlit app
 - made package installable and version tracked
+- allow better selection of models to be trained
+- 
 
 ### Datasources
 
 - functionality to use data from water data online
 - downloaded and tried the Franklin at fincham data
+
+### Modelling
+
+- Quantile regression

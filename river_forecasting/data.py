@@ -6,12 +6,17 @@ module for loading the river and rainfall data and doing some basic checks
 
 import json
 import pandas as pd
+import os
+
+DATA_DIRECTORY = "../data"
+
 
 
 def _load_section_water_data_online(section_name: str, file: str) -> pd.DataFrame:
-    filename = "../data/water_data_online/level_franklin_at_fincham.csv"
+
+    filename = os.path.join(DATA_DIRECTORY, "water_data_online", "level_" + section_name + ".csv")
     levels = pd.read_csv(filename, header=9, parse_dates=["#Timestamp"]).dropna()
-    filename = "../data/water_data_online/rainfall_franklin_at_fincham.csv"
+    filename = os.path.join(DATA_DIRECTORY, "water_data_online", "rainfall_" + section_name + ".csv")
     rainfall = pd.read_csv(filename, header=9, parse_dates=["#Timestamp"]).dropna()
 
     rainfall.rename(columns={"#Timestamp": "datetime",
@@ -31,14 +36,15 @@ def _load_section_water_data_online(section_name: str, file: str) -> pd.DataFram
 
 
 
-def load_section(section_name, source: str="wikiriver", **kwargs):
+def load_section(section_name, source: str="wikiriver", **kwargs) -> pd.DataFrame:
     if source=="wikiriver":
         df = _load_section_wikiriver(section_name, **kwargs)
     elif source=="waterdataonline":
         df = _load_section_water_data_online(section_name, **kwargs)
     return df
 
-def _load_section_wikiriver(section_name, file="../data/data_extracted.json"):
+def _load_section_wikiriver(section_name: str,
+                            file: str = "../data/data_extracted.json") -> pd.DataFrame:
     with open(file, "r") as f:
         data = json.load(f)
 
@@ -69,7 +75,7 @@ def load_training_data(section_name, file="../data/data_extracted.json", source=
     return dfs
 
 
-def split_contiguous(df):
+def split_contiguous(df: pd.DataFrame) -> list[pd.DataFrame]:
     df['frame'] = (df.index.to_series().diff().dt.seconds > 60 * 60).cumsum()
     list_of_dfs = []
     for ct, data in df.groupby('frame'):
@@ -85,31 +91,3 @@ if __name__=="__main__":
     filename = "../data/water_data_online/rainfall_franklin_at_fincham.csv"
     rainfall = pd.read_csv(filename, header=9, parse_dates=["#Timestamp"]).dropna()
 
-    rainfall.rename(columns={"#Timestamp":"datetime",
-                             "Value":"rainfall"}, inplace=True)
-
-    rainfall = rainfall[["datetime", "rainfall"]].set_index("datetime")
-    # resample to hourly
-    rainfall = rainfall.groupby(by=rainfall.index.ceil("1h")).sum()
-
-    levels.rename(columns={"#Timestamp":"datetime",
-                           "Value":"level"}, inplace=True)
-    levels = levels[["datetime", "level"]].set_index("datetime")
-    levels = levels.groupby(by=levels.index.floor("1h")).first(1)
-
-    # inds = pd.Timestamp(year=2014, month=1,day=1) < rainfall.index < pd.Timestamp(year=2016, month=1, day=1)
-    rainfall.plot()
-    plt.show()
-
-    data = pd.concat([levels, rainfall], axis=1).dropna()
-
-    plt.subplot(2, 1, 1)
-    data["rainfall"].plot()
-
-    plt.subplot(2, 1, 2)
-    data["level"].plot()
-
-    plt.tight_layout()
-    plt.show()
-
-    dfs = split_contiguous(data)

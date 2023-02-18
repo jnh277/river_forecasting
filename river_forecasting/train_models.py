@@ -4,29 +4,44 @@
 """
 import pandas as pd
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import mean_squared_error, mean_absolute_error
+from sklearn.metrics import mean_squared_error, mean_absolute_error, mean_pinball_loss
 import os
 from tqdm import tqdm
+from typing import Optional
 import numpy as np
+import warnings
+warnings.filterwarnings("ignore")
 
 from river_forecasting.data import load_training_data
 from river_forecasting.processing import RainImpulseResponseFilter
 from river_forecasting import model_manager
 from river_forecasting.features import TimeSeriesFeatures
-from river_forecasting.models import init_scikit_pipe, RegressionModelType, simple_std_eval
+from river_forecasting.models import init_scikit_pipe, RegressionModelType, QUANTILE_MODELS, LossType
+
+DEFAULT_REGRESSION_TYPES = [RegressionModelType.KNN,
+                            # RegressionModelType.RF,       # model is too large
+                            RegressionModelType.XGBOOST,
+                            # RegressionModelType.LINEAR,   # similar to ridge but always worse
+                            RegressionModelType.RIDGE,
+                            RegressionModelType.GRADBOOST]
 
 
-regression_model_types = [RegressionModelType.KNN,
-                          # RegressionModelType.RF,
-                          RegressionModelType.XGBOOST,
-                          # RegressionModelType.LINEAR,
-                          RegressionModelType.RIDGE]
+# QUANTILES = (0.025, 0.175, 0.825, 0.975)
+# QUANTILES = (0.175, 0.825)
+QUANTILES = (0.025, 0.975)
 
-
-def train_model(*, section_name: str, forecast_horizon: int=5, source="wikiriver"):
+def train_model(*, section_name: str,
+                forecast_horizon: int = 5,
+                source="wikiriver",
+                regression_model_types: list[RegressionModelType] = tuple(DEFAULT_REGRESSION_TYPES)
+                ):
     """
     Train ml models for a river section
     """
+
+    if not isinstance(regression_model_types, list):
+        regression_model_types = [regression_model_types]
+
     # load the data and do some initial processing and checks
     dfs = load_training_data(section_name=section_name, source=source)
 
@@ -45,7 +60,7 @@ def train_model(*, section_name: str, forecast_horizon: int=5, source="wikiriver
     # build models for each forecast step up to forecast horizon
 
     model_info_dicts = []
-    for forecast_step in tqdm(range(1, forecast_horizon+1), "Training models to forecast over horizon"):
+    for forecast_step in tqdm(range(1, forecast_horizon + 1), desc="Training models to forecast over horizon", position=0):
         # time series features
         time_series_features = TimeSeriesFeatures(forecast_step=forecast_step)
         X, y = time_series_features.fit_transform(data)
@@ -57,58 +72,104 @@ def train_model(*, section_name: str, forecast_horizon: int=5, source="wikiriver
 
         # split data into test and train
         X_train_, X_test_, y_train_, y_test_ = train_test_split(X, y,
-                                                            test_size=0.2,
-                                                            random_state=42,
-                                                            shuffle=False)
+                                                                test_size=0.2,
+                                                                random_state=42,
+                                                                shuffle=False)
+
+        model_types, loss_types, quantiles = parse_model_types(regression_model_types)
+
+        for model_type, loss_type, quantile in (pbar := tqdm(zip(model_types, loss_types, quantiles), leave=False, position=1)):
+            if loss_type==LossType.QUANTILE:
+                pbar.set_description(desc=f"Training {model_type} for forecast step {forecast_step} and quantile {quantile}")
+            else:
+                pbar.set_description(desc=f"Training {model_type} for forecast step {forecast_step}")
 
 
-        for regression_model_type in regression_model_types:
             X_train = X_train_.copy()
             y_train = y_train_.copy()
             X_test = X_test_.copy()
             y_test = y_test_.copy()
 
 
-            pipe = init_scikit_pipe(regression_model_type)
+            pipe = init_scikit_pipe(model_type, quantile=quantile)
             pipe.fit(X_train, y_train)
-
-            # save fit pipe
-            model_manager.save_trained_pipe(pipe=pipe, section_name=section_name,
-                                            forecast_step=forecast_step,
-                                            regression_model_type=regression_model_type)
+            model_manager.save_trained_pipe(pipe=pipe, section_name=section_name, forecast_step=forecast_step,
+                                            regression_model_type=model_type, quantile=quantile)
 
             # evaluate pipe
             y_train_pred = pipe.predict(X_train)
             y_test_pred = pipe.predict(X_test)
 
-            # steady_std, non_steady_std = simple_std_eval(X_test=X_test, y_test=y_test, y_test_pred=y_test_pred)
+            train_mse = None
+            test_mse = None
+            train_mae = None
+            test_mae = None
+            test_pinball = None
+            train_pinball = None
+            if loss_type==LossType.SQUARED_ERROR:
+                train_mse = mean_squared_error(y_train, y_train_pred)
+                test_mse = mean_squared_error(y_test, y_test_pred)
+                test_mae = mean_absolute_error(y_test, y_test_pred)
+                train_mae = mean_absolute_error(y_train, y_train_pred)
+            elif loss_type==LossType.QUANTILE:
+                train_pinball = mean_pinball_loss(y_train, y_train_pred, alpha=quantile)
+                test_pinball = mean_pinball_loss(y_test, y_test_pred, alpha=quantile)
+
 
             model_info_dict = {
-                "regression_model_type":regression_model_type.name,
-                "forecast_step":forecast_step,
-                "section_name":section_name,
-                "train score":pipe.score(X_train, y_train),
-                "train mse":mean_squared_error(y_train, y_train_pred),
-                "train mae":mean_absolute_error(y_train, y_train_pred),
+                "regression_model_type": model_type.name,
+                "forecast_step": forecast_step,
+                "section_name": section_name,
+                "loss type": loss_type.name,
+                "quantile": quantile,
+                "train score": pipe.score(X_train, y_train),
                 "test score": pipe.score(X_test, y_test),
-                "test mse": mean_squared_error(y_test, y_test_pred),
-                "test mae": mean_absolute_error(y_test, y_test_pred),
+                "train mse": train_mse,
+                "train mae": train_mae,
+                "test mse": test_mse,
+                "test mae": test_mae,
+                "train pinball": train_pinball,
+                "test pinball": test_pinball
             }
             model_info_dicts.append(model_info_dict)
 
-    model_info = pd.DataFrame(model_info_dicts)
+    model_info = model_manager.update_replace_model_info(model_info_dicts, regression_model_types, section_name)
+
     model_info.to_csv(os.path.join("../models", section_name, "model_info.csv"))
 
 
-if __name__=="__main__":
+def parse_model_types(regression_model_types: RegressionModelType) -> (list, list, list):
+    loss_types = []
+    model_types = []
+    quantiles = []
+    for model_type in regression_model_types:
+        if model_type in QUANTILE_MODELS:
+            for quantile in QUANTILES:
+                quantiles.append(quantile)
+                model_types.append(model_type)
+                loss_types.append(LossType.QUANTILE)
+        else:
+            loss_types.append(LossType.SQUARED_ERROR)
+            model_types.append(model_type)
+            quantiles.append(None)
+    return model_types, loss_types, quantiles
+
+
+
+if __name__ == "__main__":
     SECTION_NAME = "franklin_at_fincham"
     forecast_horizon=96
-    train_model(section_name=SECTION_NAME, forecast_horizon=forecast_horizon, source="waterdataonline")
+    train_model(section_name=SECTION_NAME, forecast_horizon=forecast_horizon, source="waterdataonline",
+                regression_model_types=[RegressionModelType.GRADBOOST,
+                                        RegressionModelType.XGBOOST,
+                                        RegressionModelType.RIDGE,
+                                        RegressionModelType.QUANTILE_GRADBOOST])
 
+    # SECTION_NAME = "shoalhaven-river-oallen-ford-to-tallowa-dam"
+    # forecast_horizon = 24
+    # train_model(section_name=SECTION_NAME, forecast_horizon=forecast_horizon,
+    #             regression_model_types=[RegressionModelType.XGBOOST,
+    #                                     RegressionModelType.RF,
+    #                                     RegressionModelType.RIDGE])
 
-
-
-
-
-
-
+    model_manager.delete_models(SECTION_NAME)
