@@ -110,6 +110,16 @@ def init_scikit_pipe(regression_model: RegressionModelType, quantile: Optional[f
 
 """
 
+# log cosh quantile is a regularized quantile loss function
+def log_cosh_quantile(alpha):
+    def _log_cosh_quantile(y_true, y_pred):
+        err = y_pred - y_true
+        err = np.where(err < 0, alpha * err, (1 - alpha) * err)
+        grad = np.tanh(err)
+        hess = 1 / np.cosh(err)**2
+        return grad, hess
+    return _log_cosh_quantile
+
 
 class XGBQuantile(XGBRegressor):
     def __init__(self, quant_alpha=0.95, quant_delta=1.0, quant_thres=1.0, quant_var=1.0, base_score=0.5,

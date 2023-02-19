@@ -9,6 +9,7 @@ Project for forecasting river flows based on rainfall
 - remove hardcoding of test/train split value
 - during training save the final decent contiguous section as validation data
 - better test train split for time series data
+- have optional retrain or not per model per timestep
 
 ### Data sources
 
@@ -60,7 +61,7 @@ Project for forecasting river flows based on rainfall
 - made streamlit app
 - made package installable and version tracked
 - allow better selection of models to be trained
-- 
+- added compression to saving of models
 
 ### Datasources
 

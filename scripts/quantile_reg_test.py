@@ -91,9 +91,9 @@ regressor.set_params(loss='quantile', alpha=alpha)
 y_upper = collect_prediction(X_train, y_train, X_test, y_test, estimator=regressor, alpha=alpha,
                              model_name="Gradient Boosting")
 
-fig = plt.figure(figsize=(12, 6))
+fig = plt.figure(figsize=(12, 9))
 
-plt.subplot(211)
+plt.subplot(311)
 plt.title("Prediction Interval Gradient Boosting")
 plot_result(X_train, y_train, X_test, y_test, y_upper, y_lower)
 
@@ -107,8 +107,34 @@ y_lower = collect_prediction(X_train,y_train,X_test,y_test,estimator=regressor,a
 regressor.set_params(quant_alpha=alpha,quant_delta=1.0,quant_thres=6.0,quant_var = 4.2)
 y_upper = collect_prediction(X_train,y_train,X_test,y_test,estimator=regressor,alpha=alpha,model_name="Quantile XGB")
 
-plt.subplot(212)
+plt.subplot(312)
 plt.title("Prediction Interval XGBoost")
+plot_result(X_train,y_train,X_test,y_test,y_upper,y_lower)
+
+
+
+from river_forecasting.models import log_cosh_quantile
+
+alpha = 0.05
+model = XGBRegressor(objective=log_cosh_quantile(alpha),
+                     n_estimators=100,
+                     max_depth=3,
+                     n_jobs=6,
+                     learning_rate=.05)
+
+y_lower = model.fit(X_train,y_train).predict(X_test)
+
+alpha = 0.95
+model2 = XGBRegressor(objective=log_cosh_quantile(alpha),
+                     n_estimators=100,
+                     max_depth=6,
+                     n_jobs=6,
+                     learning_rate=.05)
+
+y_upper = model2.fit(X_train,y_train).predict(X_test)
+
+plt.subplot(313)
+plt.title("Prediction Interval my XGBoost")
 plot_result(X_train,y_train,X_test,y_test,y_upper,y_lower)
 
 plt.show()

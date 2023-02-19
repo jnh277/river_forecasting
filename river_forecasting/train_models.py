@@ -157,7 +157,8 @@ def parse_model_types(regression_model_types: RegressionModelType) -> (list, lis
 
 
 if __name__ == "__main__":
-    SECTION_NAME = "franklin_at_fincham"
+    # SECTION_NAME = "franklin_at_fincham"
+    SECTION_NAME = "franklin_at_fincham_long"
     forecast_horizon=96
     train_model(section_name=SECTION_NAME, forecast_horizon=forecast_horizon, source="waterdataonline",
                 regression_model_types=[RegressionModelType.GRADBOOST,
@@ -172,4 +173,4 @@ if __name__ == "__main__":
     #                                     RegressionModelType.RF,
     #                                     RegressionModelType.RIDGE])
 
-    model_manager.delete_models(SECTION_NAME)
+    # model_manager.delete_models(SECTION_NAME)

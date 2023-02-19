@@ -92,8 +92,8 @@ class Predictor():
             if self.quantile_predictor_type is not None:
                 lower = self.ml_pipes[forecast_step, QUANTILES[0]].predict(X_curr)
                 upper = self.ml_pipes[forecast_step, QUANTILES[1]].predict(X_curr)
-                lowers.append(max(lower,0))
-                uppers.append(max(upper,0))
+                lowers.append(max(lower.item(),0))
+                uppers.append(max(upper.item(),0))
 
 
         return preds, lowers, uppers
@@ -104,21 +104,21 @@ if __name__ == "__main__":
     import matplotlib.pyplot as plt
     import time
 
-    SECTION_NAME = "shoalhaven-river-oallen-ford-to-tallowa-dam"
-    data = load_training_data(SECTION_NAME)[0]
-    forecast_horizon = 24
+    # SECTION_NAME = "shoalhaven-river-oallen-ford-to-tallowa-dam"
+    # data = load_training_data(SECTION_NAME)[0]
+    # forecast_horizon = 24
 
-    # SECTION_NAME = "franklin_at_fincham"
-    # data = load_training_data(section_name=SECTION_NAME, source="waterdataonline")[-1]
-    # forecast_horizon = 96
+    SECTION_NAME = "franklin_at_fincham_long"
+    data = load_training_data(section_name=SECTION_NAME, source="waterdataonline")[-1]
+    forecast_horizon = 96
 
-    # data.to_csv(os.path.join("../models", SECTION_NAME, "val_data.csv"))
+    data.to_csv(os.path.join("../models", SECTION_NAME, "val_data.csv"))
     # test = pd.read_csv(os.path.join("../models", SECTION_NAME, "val_data.csv"))
 
 
     predictor = Predictor(section_name=SECTION_NAME,
                           mean_predictor_type=RegressionModelType.XGBOOST,
-                          quantile_predictor_type=RegressionModelType.QUANTILE_XGBOOST)
+                          quantile_predictor_type=RegressionModelType.QUANTILE_GRADBOOST)
 
 
 
