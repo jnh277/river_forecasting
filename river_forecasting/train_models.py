@@ -28,16 +28,21 @@ DEFAULT_REGRESSION_TYPES = [RegressionModelType.KNN,
 
 # QUANTILES = (0.025, 0.175, 0.825, 0.975)
 # QUANTILES = (0.175, 0.825)
-QUANTILES = (0.025, 0.975)
+# QUANTILES = (0.025, 0.975)
+QUANTILES = (0.1, 0.9)  # 80%
 
 def train_model(*, section_name: str,
                 forecast_horizon: int = 5,
                 source="wikiriver",
-                regression_model_types: list[RegressionModelType] = tuple(DEFAULT_REGRESSION_TYPES)
+                regression_model_types: list[RegressionModelType] = tuple(DEFAULT_REGRESSION_TYPES),
+                retrain: bool = False,
+                tune: bool = False,
                 ):
     """
     Train ml models for a river section
     """
+
+    model_info_manager = model_manager.ModelInfoManager(section_name=section_name)
 
     if not isinstance(regression_model_types, list):
         regression_model_types = [regression_model_types]
@@ -84,6 +89,10 @@ def train_model(*, section_name: str,
             else:
                 pbar.set_description(desc=f"Training {model_type} for forecast step {forecast_step}")
 
+            if (not retrain) and (model_info_manager.already_trained(model_type=model_type,
+                                                                     forecast_step=forecast_step,
+                                                                     quantile=quantile)):
+                continue
 
             X_train = X_train_.copy()
             y_train = y_train_.copy()
@@ -129,13 +138,18 @@ def train_model(*, section_name: str,
                 "test mse": test_mse,
                 "test mae": test_mae,
                 "train pinball": train_pinball,
-                "test pinball": test_pinball
+                "test pinball": test_pinball,
+                "tuned": tune
             }
+
             model_info_dicts.append(model_info_dict)
 
-    model_info = model_manager.update_replace_model_info(model_info_dicts, regression_model_types, section_name)
+    # model_info = model_manager.update_replace_model_info(model_info_dicts, regression_model_types, section_name)
+    model_info_manager.update(model_info_dicts=model_info_dicts)
+    model_info_manager.save()
 
-    model_info.to_csv(os.path.join("../models", section_name, "model_info.csv"))
+    dfs[-1].to_csv(os.path.join("../models", SECTION_NAME, "val_data.csv"))
+    # model_info.to_csv(os.path.join("../models", section_name, "model_info.csv"))
 
 
 def parse_model_types(regression_model_types: RegressionModelType) -> (list, list, list):
@@ -157,8 +171,8 @@ def parse_model_types(regression_model_types: RegressionModelType) -> (list, lis
 
 
 if __name__ == "__main__":
-    # SECTION_NAME = "franklin_at_fincham"
-    SECTION_NAME = "franklin_at_fincham_long"
+    SECTION_NAME = "franklin_at_fincham"
+    # SECTION_NAME = "franklin_at_fincham_long"
     forecast_horizon=96
     train_model(section_name=SECTION_NAME, forecast_horizon=forecast_horizon, source="waterdataonline",
                 regression_model_types=[RegressionModelType.GRADBOOST,
@@ -167,10 +181,11 @@ if __name__ == "__main__":
                                         RegressionModelType.QUANTILE_GRADBOOST])
 
     # SECTION_NAME = "shoalhaven-river-oallen-ford-to-tallowa-dam"
-    # forecast_horizon = 24
+    # forecast_horizon = 14
     # train_model(section_name=SECTION_NAME, forecast_horizon=forecast_horizon,
     #             regression_model_types=[RegressionModelType.XGBOOST,
     #                                     RegressionModelType.RF,
-    #                                     RegressionModelType.RIDGE])
+    #                                     RegressionModelType.RIDGE,
+    #                                     RegressionModelType.GRADBOOST])
 
     # model_manager.delete_models(SECTION_NAME)

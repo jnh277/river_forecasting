@@ -4,9 +4,9 @@ import matplotlib.pyplot as plt
 
 from river_forecasting.model_manager import RegressionModelType
 
-# SECTION_NAME = "shoalhaven-river-oallen-ford-to-tallowa-dam"
+SECTION_NAME = "shoalhaven-river-oallen-ford-to-tallowa-dam"
 # SECTION_NAME = "franklin_at_fincham"
-SECTION_NAME = "franklin_at_fincham_long"
+# SECTION_NAME = "franklin_at_fincham_long"
 
 filepath = os.path.join("../models/",SECTION_NAME,"model_info.csv")
 df_all = pd.read_csv(filepath, index_col="Unnamed: 0")

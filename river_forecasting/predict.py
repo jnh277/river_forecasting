@@ -108,11 +108,11 @@ if __name__ == "__main__":
     # data = load_training_data(SECTION_NAME)[0]
     # forecast_horizon = 24
 
-    SECTION_NAME = "franklin_at_fincham_long"
+    SECTION_NAME = "franklin_at_fincham"
     data = load_training_data(section_name=SECTION_NAME, source="waterdataonline")[-1]
     forecast_horizon = 96
 
-    data.to_csv(os.path.join("../models", SECTION_NAME, "val_data.csv"))
+    # data.to_csv(os.path.join("../models", SECTION_NAME, "val_data.csv"))
     # test = pd.read_csv(os.path.join("../models", SECTION_NAME, "val_data.csv"))
 
 

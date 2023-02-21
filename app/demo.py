@@ -144,16 +144,6 @@ if current >= 200:
 
     plot_data = plot_data.reset_index().melt("datetime")
 
-    # fig = plt.figure(figsize=(6, 3))
-    # plt.plot(pred_df["predicted"], color='b', linewidth=2, label="forecast")
-    # plt.plot(pred_df["upper"], color='b', linewidth=1.)
-    # plt.plot(pred_df["lower"], color='b', linewidth=1.)
-    # plt.plot(level_future, color='k', linewidth=2, label="actual")
-    # plt.grid(visible=True, which="major")
-    #
-    # plt.legend()
-    #
-    # st.pyplot(fig)
 
     predicted_plot = alt.Chart(plot_data, width=1200, height=600).mark_line().encode(
         x="datetime",
@@ -169,12 +159,7 @@ if current >= 200:
         color=alt.value('blue'),
         opacity=alt.value(0.2)
     )
-    #
-    # actual_plot = alt.Chart(level_future.reset_index(), width=600, height=300).mark_line().encode(
-    #     x="datetime",
-    #     y="level",
-    #     color=alt.value('red')
-    # )
+
     #
     comp_plot = predicted_plot + prediction_interval
     #
