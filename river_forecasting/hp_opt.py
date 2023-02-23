@@ -22,7 +22,7 @@ tuning_spaces = {
         "min_samples_leaf": scope.int(hp.qloguniform("min_samples_leaf", np.log(1), np.log(20), 1)),
     },
     RegressionModelType.GRADBOOST: {
-        'learning_rate': hp.loguniform('learning_rate', -8, -2.3),  # 0.001 to 0.1,
+        'learning_rate': hp.loguniform('learning_rate', -8, -1),  # 0.001 to 0.1,
         'n_estimators': scope.int(hp.qloguniform('n_estimators', np.log(30), np.log(1000), 1)),
         'subsample': hp.uniform('subsample', 0.5, 1),
         'max_depth': scope.int(hp.quniform('max_depth', 2, 30, 1)),
@@ -34,7 +34,7 @@ tuning_spaces = {
         "alpha": hp.uniform("alpha", 0, 10)
     },
     RegressionModelType.XGBOOST: {
-        'learning_rate': hp.loguniform('learning_rate', -8, -2.3),  # 0.001 to 0.1
+        'learning_rate': hp.loguniform('learning_rate', -8, -1),  # 0.001 to 0.3
         'max_depth': scope.int(hp.quniform('max_depth', 2, 30, 1)),
         'min_child_weight': hp.loguniform('min_child_weight', np.log(1e-6), np.log(32.0)),
         'colsample_bytree': hp.uniform('colsample_bytree', 0.3, 1.0),
@@ -72,7 +72,8 @@ def tqdm_progress_callback(initial, total):
         unit="trial",
         initial=initial,
         position=3,
-        leave=False
+        leave=False,
+        desc="HP optimisation"
     ) as pbar:
         yield pbar
 
@@ -129,7 +130,7 @@ def run_hpopt(
                              ),
                   space=tuning_spaces[model_type],
                   algo=tpe.suggest,
-                  max_evals=len(tuning_spaces[model_type].keys())*30,
+                  max_evals=len(tuning_spaces[model_type].keys())*40,
                   trials=trials,
                   show_progressbar=tqdm_progress_callback
                   )

@@ -67,7 +67,7 @@ def train_model(*, section_name: str,
     # build models for each forecast step up to forecast horizon
 
     model_info_dicts = []
-    for forecast_step in tqdm(range(1, forecast_horizon + 1), desc="Training models to forecast over horizon", position=0):
+    for forecast_step in tqdm(range(1, forecast_horizon + 1), desc="Iterating forecast horizon", position=0):
         # time series features
         time_series_features = TimeSeriesFeatures(forecast_step=forecast_step)
         X, y = time_series_features.fit_transform(data)
@@ -85,11 +85,14 @@ def train_model(*, section_name: str,
 
         model_types, loss_types, quantiles = parse_model_types(regression_model_types)
 
-        for model_type, loss_type, quantile in (pbar := tqdm(zip(model_types, loss_types, quantiles), leave=False, position=1)):
+
+        for model_type, loss_type, quantile in (pbar := tqdm(zip(model_types, loss_types, quantiles), leave=False, position=1, total=len(model_types), desc="Iterating models")):
             if loss_type==LossType.QUANTILE:
-                pbar.set_description(desc=f"Training {model_type} for forecast step {forecast_step} and quantile {quantile}")
+                pbar.set_postfix({'Model type': model_type.name, "quantile": quantile})
+                # pbar.set_description(desc=f"Training {model_type} for forecast step {forecast_step} and quantile {quantile}")
             else:
-                pbar.set_description(desc=f"Training {model_type} for forecast step {forecast_step}")
+                pbar.set_postfix({'Model type': model_type.name})
+                # pbar.set_description(desc=f"Training {model_type} for forecast step {forecast_step}")
 
             if (not retrain) and (model_info_manager.already_trained(model_type=model_type,
                                                                      forecast_step=forecast_step,
