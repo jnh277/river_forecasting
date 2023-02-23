@@ -3,6 +3,9 @@ Project for forecasting river flows based on rainfall
 
 ## To do
 
+### BUGS
+- second level tqdm is not displaying progress bar properly
+
 ### Utility
 
 - improve steamlit app 
@@ -25,7 +28,6 @@ Project for forecasting river flows based on rainfall
 - Quantile regression for xgboost when it becomes available (or try this? https://towardsdatascience.com/confidence-intervals-for-xgboost-cac2955a8fde)
 - variational inference (less keen on this)
 - impulse response neural networks
-- hyperparmeter search (HIGH)
 - feature selection (HIGH)
 - multi rain inputs
 - upstream river gauge inputs
@@ -73,3 +75,4 @@ Project for forecasting river flows based on rainfall
 ### Modelling
 
 - Quantile regression
+- hyperparmeter search (HIGH)
