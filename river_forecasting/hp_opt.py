@@ -130,7 +130,7 @@ def run_hpopt(
                              ),
                   space=tuning_spaces[model_type],
                   algo=tpe.suggest,
-                  max_evals=len(tuning_spaces[model_type].keys())*40,
+                  max_evals=len(tuning_spaces[model_type].keys())*30,
                   trials=trials,
                   show_progressbar=tqdm_progress_callback
                   )
