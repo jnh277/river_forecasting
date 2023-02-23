@@ -17,6 +17,8 @@ from river_forecasting.processing import RainImpulseResponseFilter
 from river_forecasting import model_manager
 from river_forecasting.features import TimeSeriesFeatures
 from river_forecasting.models import init_scikit_pipe, RegressionModelType, QUANTILE_MODELS, LossType
+from river_forecasting.hp_opt import run_hpopt
+
 
 DEFAULT_REGRESSION_TYPES = [RegressionModelType.KNN,
                             # RegressionModelType.RF,       # model is too large
@@ -65,7 +67,7 @@ def train_model(*, section_name: str,
     # build models for each forecast step up to forecast horizon
 
     model_info_dicts = []
-    for forecast_step in tqdm(range(1, forecast_horizon + 1), desc="Training models to forecast over horizon", position=0):
+    for forecast_step in tqdm(range(1, forecast_horizon + 1), desc="Iterating forecast horizon", position=0):
         # time series features
         time_series_features = TimeSeriesFeatures(forecast_step=forecast_step)
         X, y = time_series_features.fit_transform(data)
@@ -83,11 +85,14 @@ def train_model(*, section_name: str,
 
         model_types, loss_types, quantiles = parse_model_types(regression_model_types)
 
-        for model_type, loss_type, quantile in (pbar := tqdm(zip(model_types, loss_types, quantiles), leave=False, position=1)):
+
+        for model_type, loss_type, quantile in (pbar := tqdm(zip(model_types, loss_types, quantiles), leave=False, position=1, total=len(model_types), desc="Iterating models")):
             if loss_type==LossType.QUANTILE:
-                pbar.set_description(desc=f"Training {model_type} for forecast step {forecast_step} and quantile {quantile}")
+                pbar.set_postfix({'Model type': model_type.name, "quantile": quantile})
+                # pbar.set_description(desc=f"Training {model_type} for forecast step {forecast_step} and quantile {quantile}")
             else:
-                pbar.set_description(desc=f"Training {model_type} for forecast step {forecast_step}")
+                pbar.set_postfix({'Model type': model_type.name})
+                # pbar.set_description(desc=f"Training {model_type} for forecast step {forecast_step}")
 
             if (not retrain) and (model_info_manager.already_trained(model_type=model_type,
                                                                      forecast_step=forecast_step,
@@ -99,9 +104,12 @@ def train_model(*, section_name: str,
             X_test = X_test_.copy()
             y_test = y_test_.copy()
 
+            if tune:
+                pipe = run_hpopt(model_type, X_train_, y_train_, X_test_, y_test_, quantile)
+            else:
+                pipe = init_scikit_pipe(model_type, quantile=quantile)
+                pipe.fit(X_train, y_train)
 
-            pipe = init_scikit_pipe(model_type, quantile=quantile)
-            pipe.fit(X_train, y_train)
             model_manager.save_trained_pipe(pipe=pipe, section_name=section_name, forecast_step=forecast_step,
                                             regression_model_type=model_type, quantile=quantile)
 
@@ -171,21 +179,27 @@ def parse_model_types(regression_model_types: RegressionModelType) -> (list, lis
 
 
 if __name__ == "__main__":
-    SECTION_NAME = "franklin_at_fincham"
+    # SECTION_NAME = "franklin_at_fincham"
     # SECTION_NAME = "franklin_at_fincham_long"
-    forecast_horizon=96
-    train_model(section_name=SECTION_NAME, forecast_horizon=forecast_horizon, source="waterdataonline",
-                regression_model_types=[RegressionModelType.GRADBOOST,
-                                        RegressionModelType.XGBOOST,
-                                        RegressionModelType.RIDGE,
-                                        RegressionModelType.QUANTILE_GRADBOOST])
-
-    # SECTION_NAME = "shoalhaven-river-oallen-ford-to-tallowa-dam"
-    # forecast_horizon = 14
-    # train_model(section_name=SECTION_NAME, forecast_horizon=forecast_horizon,
-    #             regression_model_types=[RegressionModelType.XGBOOST,
-    #                                     RegressionModelType.RF,
+    # forecast_horizon=96
+    # train_model(section_name=SECTION_NAME, forecast_horizon=forecast_horizon, source="waterdataonline",
+    #             regression_model_types=[RegressionModelType.GRADBOOST,
+    #                                     RegressionModelType.XGBOOST,
     #                                     RegressionModelType.RIDGE,
-    #                                     RegressionModelType.GRADBOOST])
+    #                                     RegressionModelType.QUANTILE_GRADBOOST])
+
+    SECTION_NAME = "shoalhaven-river-oallen-ford-to-tallowa-dam"
+    forecast_horizon = 24
+    train_model(section_name=SECTION_NAME, forecast_horizon=forecast_horizon,
+                regression_model_types=[
+                                        RegressionModelType.XGBOOST,
+                                        # RegressionModelType.KNN,
+                                        # RegressionModelType.RF,
+                                        # RegressionModelType.RIDGE,
+                                        # RegressionModelType.GRADBOOST,
+                                        RegressionModelType.QUANTILE_GRADBOOST
+                                        ],
+                tune=True,
+                retrain=True)
 
     # model_manager.delete_models(SECTION_NAME)
