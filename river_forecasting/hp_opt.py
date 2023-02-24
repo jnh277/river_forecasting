@@ -6,7 +6,7 @@ import sklearn.pipeline as Pipeline
 from sklearn.metrics import mean_squared_error, mean_pinball_loss
 from tqdm import tqdm
 from functools import partial
-from hyperopt import fmin, hp, tpe, space_eval, STATUS_OK, Trials, STATUS_FAIL, progress
+from hyperopt import fmin, hp, tpe, space_eval, STATUS_OK, Trials, STATUS_FAIL
 from hyperopt.pyll import scope
 
 from river_forecasting.models import RegressionModelType

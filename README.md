@@ -3,14 +3,11 @@ Project for forecasting river flows based on rainfall
 
 ## To do
 
-### BUGS
-- second level tqdm is not displaying progress bar properly
-
 ### Utility
 
-- improve steamlit app 
-- remove hardcoding of test/train split value
-- better test train split for time series data
+- remove hardcoding of test/train split value (low)
+- better test train split for time series data (low)
+- implement parrallel processing in train models (high)
 
 
 ### Data sources
@@ -19,20 +16,22 @@ Project for forecasting river flows based on rainfall
   - explore what other sections and gauge combinations could be good
 - WikiRiver
   - Get updated _data
-- BOM provided barrington river data_
+- BOM provided barrington river data_ (low)
 
 ### Modelling ideas
 
+- feature selection (HIGH)
+- EBM models (MED)
 - Monotonically constrained models
 - Quantile regression for random forests
 - Quantile regression for xgboost when it becomes available (or try this? https://towardsdatascience.com/confidence-intervals-for-xgboost-cac2955a8fde)
 - variational inference (less keen on this)
 - impulse response neural networks
-- feature selection (HIGH)
+
 - multi rain inputs
 - upstream river gauge inputs
-- compare current franklin results with longer dataset (HIGH)
-- EBM models (MED)
+
+
 
 ### Integrations
 
@@ -65,6 +64,7 @@ Project for forecasting river flows based on rainfall
 - added compression to saving of models
 - have optional retrain or not per model per timestep
 - during training save the final decent contiguous section as validation data
+- improve steamlit app 
 
 
 ### Datasources
@@ -76,3 +76,7 @@ Project for forecasting river flows based on rainfall
 
 - Quantile regression
 - hyperparmeter search (HIGH)
+- compare current franklin results with longer dataset (HIGH), diminishing returns
+
+### BUGS
+- second level tqdm is not displaying progress bar properly

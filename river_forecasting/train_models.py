@@ -7,8 +7,6 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics import mean_squared_error, mean_absolute_error, mean_pinball_loss
 import os
 from tqdm import tqdm
-from typing import Optional
-import numpy as np
 import warnings
 warnings.filterwarnings("ignore")
 
@@ -181,12 +179,16 @@ def parse_model_types(regression_model_types: RegressionModelType) -> (list, lis
 if __name__ == "__main__":
     # SECTION_NAME = "franklin_at_fincham"
     # SECTION_NAME = "franklin_at_fincham_long"
-    # forecast_horizon=96
+    # forecast_horizon=5
     # train_model(section_name=SECTION_NAME, forecast_horizon=forecast_horizon, source="waterdataonline",
-    #             regression_model_types=[RegressionModelType.GRADBOOST,
+    #             regression_model_types=[
+    #                                     # RegressionModelType.GRADBOOST,
     #                                     RegressionModelType.XGBOOST,
-    #                                     RegressionModelType.RIDGE,
-    #                                     RegressionModelType.QUANTILE_GRADBOOST])
+    #                                     # RegressionModelType.RIDGE,
+    #                                     RegressionModelType.QUANTILE_GRADBOOST],
+    #             tune=True,
+    #             retrain=False
+    # )
 
     SECTION_NAME = "shoalhaven-river-oallen-ford-to-tallowa-dam"
     forecast_horizon = 24

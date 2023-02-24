@@ -10,3 +10,4 @@ feature_engine>=1.5.0,<1.6.0
 xgboost>=1.7.0,<1.8.0
 streamlit>=1.18.0,<1.19.0
 altair>=4.2.0,<4.3.0
+hyperopt>=0.2.0,<0.3.0
