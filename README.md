@@ -5,6 +5,7 @@ Project for forecasting river flows based on rainfall
 
 ### Utility
 
+- forecast input validation!
 - remove hardcoding of test/train split value (low)
 - better test train split for time series data (low)
 - implement parrallel processing in train models (high)

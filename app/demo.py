@@ -20,6 +20,7 @@ st.title(f'River forecasting demo')
 
 sections = {"": "",
             "Franklin River": "franklin_at_fincham_save",
+            "Collingwood River": "collingwood_below_alma",
             "Shoalhaven River": "shoalhaven-river-oallen-ford-to-tallowa-dam"}
 
 
@@ -139,10 +140,14 @@ if river != "":
 
         index = data[:current + forecast_horizon].index
 
-        preds, lower, upper = predictor.predict(level_history=pd.Series(level_history, index=df_past.index),
+        results = predictor.predict(level_history=pd.Series(level_history, index=df_past.index),
                                                 rain_history=pd.Series(rain_history, index=df_past.index),
                                                 level_diff_history=pd.Series(level_diff_history, index=df_past.index),
                                                 future_rainfall=pd.Series(rain_future, index=df_future.index))
+
+        preds = results["preds"]
+        lower = results["lowers"]
+        upper = results["uppers"]
 
         pred_df = pd.DataFrame(index=level_future.index)
         pred_df["predicted"] = preds
