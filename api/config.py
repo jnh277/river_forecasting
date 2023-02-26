@@ -8,7 +8,6 @@ from pydantic import AnyHttpUrl, BaseSettings
 
 model_version = "0.0.7"
 
-
 class LoggingSettings(BaseSettings):
     LOGGING_LEVEL: int = logging.INFO  # logging levels are type int
 
