@@ -154,8 +154,11 @@ def train_model(*, section_name: str,
     model_info_manager.update(model_info_dicts=model_info_dicts)
     model_info_manager.save()
 
-    dfs[-1].to_csv(os.path.join("../models", SECTION_NAME, "val_data.csv"))
-    # model_info.to_csv(os.path.join("../models", section_name, "model_info.csv"))
+    for i in range(-1, -len(dfs)):
+        if len(dfs[i]) > 1000:
+            dfs[-1].to_csv(os.path.join("../models", SECTION_NAME, "val_data.csv"))
+            break
+
 
 
 def parse_model_types(regression_model_types: RegressionModelType) -> (list, list, list):
@@ -190,18 +193,32 @@ if __name__ == "__main__":
     #             retrain=False
     # )
 
-    SECTION_NAME = "shoalhaven-river-oallen-ford-to-tallowa-dam"
-    forecast_horizon = 24
-    train_model(section_name=SECTION_NAME, forecast_horizon=forecast_horizon,
+    # SECTION_NAME = "shoalhaven-river-oallen-ford-to-tallowa-dam"
+    # forecast_horizon = 24
+    # train_model(section_name=SECTION_NAME, forecast_horizon=forecast_horizon,
+    #             regression_model_types=[
+    #                                     RegressionModelType.XGBOOST,
+    #                                     # RegressionModelType.KNN,
+    #                                     # RegressionModelType.RF,
+    #                                     # RegressionModelType.RIDGE,
+    #                                     # RegressionModelType.GRADBOOST,
+    #                                     RegressionModelType.QUANTILE_GRADBOOST
+    #                                     ],
+    #             tune=True,
+    #             retrain=True)
+
+    SECTION_NAME = "collingwood_below_alma"
+    forecast_horizon = 120
+    train_model(section_name=SECTION_NAME, forecast_horizon=forecast_horizon, source="waterdataonline",
                 regression_model_types=[
                                         RegressionModelType.XGBOOST,
-                                        # RegressionModelType.KNN,
+                                        RegressionModelType.KNN,
                                         # RegressionModelType.RF,
-                                        # RegressionModelType.RIDGE,
-                                        # RegressionModelType.GRADBOOST,
+                                        RegressionModelType.RIDGE,
+                                        RegressionModelType.GRADBOOST,
                                         RegressionModelType.QUANTILE_GRADBOOST
                                         ],
-                tune=True,
-                retrain=True)
+                tune=False,
+                retrain=False)
 
     # model_manager.delete_models(SECTION_NAME)

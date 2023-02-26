@@ -4,7 +4,8 @@ import matplotlib.pyplot as plt
 
 from river_forecasting.model_manager import RegressionModelType
 
-SECTION_NAME = "shoalhaven-river-oallen-ford-to-tallowa-dam"
+# SECTION_NAME = "shoalhaven-river-oallen-ford-to-tallowa-dam"
+SECTION_NAME = "collingwood_below_alma"
 # SECTION_NAME = "franklin_at_fincham"
 # SECTION_NAME = "franklin_at_fincham_long"
 

@@ -18,7 +18,7 @@ name = "johannes Hendriks"
 [tool.setuptools.packages.find]
 where = ["."]
 include = ["river_forecasting"]
-exclude = ["data", "models", "app"]
+exclude = ["data", "models", "app", "api"]
 [tool.setuptools.dynamic]
 dependencies = {file=["requirements.txt"]}
 [tool.setuptools-git-versioning]

@@ -20,6 +20,7 @@ st.title(f'River forecasting demo')
 
 sections = {"": "",
             "Franklin River": "franklin_at_fincham_save",
+            "Collingwood River": "collingwood_below_alma",
             "Shoalhaven River": "shoalhaven-river-oallen-ford-to-tallowa-dam"}
 
 

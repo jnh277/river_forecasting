@@ -10,6 +10,7 @@ from typing import Optional
 from river_forecasting.model_manager import load_rain_fir, load_ts_feature, load_trained_pipe
 from river_forecasting.models import RegressionModelType, QUANTILE_MODELS
 from river_forecasting.train_models import QUANTILES
+from river_forecasting.validation import validate_inputs
 
 
 # todo: add min historical length
@@ -65,38 +66,49 @@ class Predictor():
                 level_history: pd.Series,
                 rain_history: pd.Series,
                 level_diff_history: pd.Series,
-                future_rainfall: pd.Series) -> (list, list, list):
+                future_rainfall: pd.Series) -> dict:
 
-        assert len(level_history) >= self.min_history, f"must provide at least {self.min_history}h of past data"
+        errors = validate_inputs(level_history=level_history,
+                                 rain_history=rain_history,
+                                 level_diff_history=level_diff_history,
+                                 future_rainfall=future_rainfall,
+                                 min_history=self.min_history)
+        results = {"validation_errors":errors, "preds":None, "lowers": None, "uppers":None}
 
-        len_rainfall = len(future_rainfall)
-        forecast_horizon = min(len_rainfall, self.max_forecast_horizon)
+        if errors is None:
+            len_rainfall = len(future_rainfall)
+            forecast_horizon = min(len_rainfall, self.max_forecast_horizon)
 
-        # index = [list(past_df), list(future_rainfall.index]
-        d = {"level": level_history,
-             "rain": pd.concat([rain_history, future_rainfall]),
-             "level_diff": level_diff_history}
-        data = pd.DataFrame(d)
+            # index = [list(past_df), list(future_rainfall.index]
+            d = {"level": level_history,
+                 "rain": pd.concat([rain_history, future_rainfall]),
+                 "level_diff": level_diff_history}
+            data = pd.DataFrame(d)
 
-        data = self.rainFIR.apply_filter([data])[0]
-        preds = []
-        uppers = []
-        lowers = []
+            data = self.rainFIR.apply_filter([data])[0]
+            preds = []
+            uppers = []
+            lowers = []
 
-        for forecast_step in range(1, forecast_horizon + 1):
-            # only predict for the final point
-            X = self.ts_features[forecast_step].transform(data)
-            X_curr = X[self.ml_pipes[forecast_step].feature_names_in_].tail(1)
-            pred = self.ml_pipes[forecast_step].predict(X_curr)
-            preds.append(pred.item())
-            if self.quantile_predictor_type is not None:
-                lower = self.ml_pipes[forecast_step, QUANTILES[0]].predict(X_curr)
-                upper = self.ml_pipes[forecast_step, QUANTILES[1]].predict(X_curr)
-                lowers.append(max(lower.item(),0))
-                uppers.append(max(upper.item(),0))
+            for forecast_step in range(1, forecast_horizon + 1):
+                # only predict for the final point
+                X = self.ts_features[forecast_step].transform(data)
+                X_curr = X[self.ml_pipes[forecast_step].feature_names_in_].tail(1)
+                pred = self.ml_pipes[forecast_step].predict(X_curr)
+                preds.append(pred.item())
+                if self.quantile_predictor_type is not None:
+                    lower = self.ml_pipes[forecast_step, QUANTILES[0]].predict(X_curr)
+                    upper = self.ml_pipes[forecast_step, QUANTILES[1]].predict(X_curr)
+                    lowers.append(max(lower.item(),0))
+                    uppers.append(max(upper.item(),0))
 
-
-        return preds, lowers, uppers
+            results = {
+                "preds":preds,
+                "lowers":lowers,
+                "uppers":uppers,
+                "validation_errors":errors
+            }
+        return results
 
 
 if __name__ == "__main__":
@@ -108,10 +120,15 @@ if __name__ == "__main__":
     # data = load_training_data(SECTION_NAME)[0]
     # forecast_horizon = 24
 
-    SECTION_NAME = "franklin_at_fincham"
-    data = load_training_data(section_name=SECTION_NAME, source="waterdataonline")[-1]
-    forecast_horizon = 96
+    # SECTION_NAME = "franklin_at_fincham"
+    # data = load_training_data(section_name=SECTION_NAME, source="waterdataonline")[-1]
+    # forecast_horizon = 96
 
+    SECTION_NAME = "collingwood_below_alma"
+    data = load_training_data(section_name=SECTION_NAME, source="waterdataonline")[-5]
+    forecast_horizon = 120
+
+    # if len(val_data) < 1000
     # data.to_csv(os.path.join("../models", SECTION_NAME, "val_data.csv"))
     # test = pd.read_csv(os.path.join("../models", SECTION_NAME, "val_data.csv"))
 
@@ -135,15 +152,22 @@ if __name__ == "__main__":
 
     level_future = df_future["level"].copy()
 
+    rain_future = pd.Series(rain_future, index=df_future.index)
+    # rain_future = rain_future[5:]
+
     index = data[:current + forecast_horizon].index
 
     t1 = time.perf_counter()
-    preds, lowers, uppers = predictor.predict(level_history=pd.Series(level_history, index=df_past.index),
+    results = predictor.predict(level_history=pd.Series(level_history, index=df_past.index),
                                             rain_history=pd.Series(rain_history, index=df_past.index),
                                             level_diff_history=pd.Series(level_diff_history, index=df_past.index),
-                                            future_rainfall=pd.Series(rain_future, index=df_future.index))
+                                            future_rainfall=rain_future)
 
     t2 = time.perf_counter()
+
+    preds = results["preds"]
+    lowers = results["lowers"]
+    uppers = results["uppers"]
     print("time to predict ", t2 - t1)
 
     plt.plot(level_future, label="True")
