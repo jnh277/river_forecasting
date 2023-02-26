@@ -23,8 +23,8 @@ WORKDIR /home/api
 ##EXPOSE 8050
 #
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8050"]
-#CMD ["gunicorn","--workers=10", "--threads=1", "-b 0.0.0.0:8050","-t 600", "app:server"]
 
+#CMD ["gunicorn","--workers=10", "--threads=1", "-b 0.0.0.0:8050","-t 600", "app:server"]
 
 # build this using docker build -t river_forecaster:0.0.9 .
 # run using docker run -p 8050:8001 -t river_forecaster:0.0.9
