@@ -7,12 +7,11 @@ from fastapi import APIRouter, HTTPException
 from fastapi.encoders import jsonable_encoder
 from loguru import logger
 
-from river_forecasting import __version__ as model_version
 from river_forecasting.predict import Predictor
 from river_forecasting.models import RegressionModelType
 
 from api import __version__, schemas
-from api.config import settings
+from api.config import settings, model_version
 from api.schemas.predict import Sections
 import time
 
