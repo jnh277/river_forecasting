@@ -5,7 +5,7 @@ Project for forecasting river flows based on rainfall
 
 ### Utility
 
-- forecast input validation!
+- separate requirements.txt out into train vs use
 - remove hardcoding of test/train split value (low)
 - better test train split for time series data (low)
 - implement parrallel processing in train models (high)
@@ -59,6 +59,7 @@ Project for forecasting river flows based on rainfall
 
 ### Utility
 
+- forecast input validation!
 - made streamlit app
 - made package installable and version tracked
 - allow better selection of models to be trained
