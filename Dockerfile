@@ -16,7 +16,6 @@ COPY ./models/collingwood_below_alma ./models/collingwood_below_alma
 
 WORKDIR /home/api
 
-
 #EXPOSE 8001
 # run the command
 #CMD ["python", "./main.py"]
