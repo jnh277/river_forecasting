@@ -7,6 +7,7 @@ Project for forecasting river flows based on rainfall
 Level gauge:
 - franklin_at_fincham
 - source: water_data_online
+
 Rainfall:
 - franklin_at_fincham
 - source: water_data_online
@@ -17,6 +18,7 @@ Rainfall:
 Level gauge:
 - collingwood_below_alma
 - source: water_data_online
+
 Rainfall:
 - franklin_at_fincham
 - source: water_data_online
