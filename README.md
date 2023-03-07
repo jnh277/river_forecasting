@@ -1,6 +1,29 @@
 # River Forecasting
 Project for forecasting river flows based on rainfall
 
+## Trained models
+
+### Franklin at Fincham
+Level gauge:
+- franklin_at_fincham
+- source: water_data_online
+Rainfall:
+- franklin_at_fincham
+- source: water_data_online
+- lat: 42.24 
+- lon: 145.77
+
+### Collingwood below alma
+Level gauge:
+- collingwood_below_alma
+- source: water_data_online
+Rainfall:
+- franklin_at_fincham
+- source: water_data_online
+- lat: 42.24 
+- lon: 145.77
+
+
 ## To do
 
 ### Utility
@@ -35,8 +58,6 @@ Project for forecasting river flows based on rainfall
 
 
 ### Integrations
-
-- Openweather API (HIGH)
 - WikiRiver
 
 
@@ -44,7 +65,6 @@ Project for forecasting river flows based on rainfall
 
 - Make package installable
   - MANIFEST.in
-- API?
 - config.yaml (MED)
 - TESTS (HIGH)
 
@@ -56,6 +76,7 @@ Project for forecasting river flows based on rainfall
 - make package installable
   - Pyproject.toml
   - Versioning
+- API?
 
 ### Utility
 
