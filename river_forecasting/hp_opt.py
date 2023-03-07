@@ -110,7 +110,7 @@ def run_hpopt(
         X_test: pd.DataFrame,
         y_test: pd.DataFrame,
         quantile: Union[float, None],
-) -> Pipeline:
+) -> (Pipeline, float, float, dict):
 
     pipe = init_scikit_pipe(model_type, quantile)
     pipe.fit(X_train, y_train)
@@ -146,4 +146,48 @@ def run_hpopt(
         pipe = init_scikit_pipe(model_type, quantile)
         pipe.fit(X_train, y_train)
 
-    return pipe
+    return pipe, best_loss, loss, best_params
+
+class HPOptimScheduler():
+    def __init__(self, schedule: list[int], model_types: list[RegressionModelType], quantiles:list[float]):
+        self.schedule = schedule
+        self. model_types = model_types
+        self.quantiles = quantiles
+        if 1 not in schedule:
+            self.schedule = [1]
+            self.schedule.extend(schedule)
+        else:
+            self.schedule = schedule
+
+        self.tuned_losses = {}
+        self.tuned_params = {}
+        self.untuned_losses = []
+        for s in schedule:
+            for model_type, quantile in zip(model_types, quantiles):
+                self.tuned_losses = {(model_type, quantile, s): []}
+                self.tuned_params = {(model_type, quantile, s): {}}
+
+    def run(self,
+            model_type: RegressionModelType,
+            X_train: pd.DataFrame,
+            y_train: pd.DataFrame,
+            X_test: pd.DataFrame,
+            y_test: pd.DataFrame,
+            quantile: Union[float, None],
+            forecast_step: int
+            ):
+        if (forecast_step in self.schedule):
+
+            pipe, tuned_loss, untuned_loss, params = run_hpopt(model_type=model_type, X_train=X_train,
+                      y_train=y_train, X_test=X_test, y_test=y_test,
+                      quantile=quantile)
+
+            self.tuned_losses[(model_type, quantile, forecast_step)].append(tuned_loss)
+            self.untuned_losses.append(untuned_loss)
+            self.tuned_params[(model_type, quantile, forecast_step)] = params
+
+            pass
+        else:
+            # run with only old and no optimisation
+
+        pass
