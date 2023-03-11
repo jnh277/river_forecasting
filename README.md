@@ -44,7 +44,6 @@ Rainfall:
   - Get updated _data
 - BOM provided barrington river data_ (low)
 - work out how to clean the 'bielsdown_at_dorrigo' rain gauge info from water data online (seems in this specific case the quality code needs to be 10, not the case with some other gauges)
-- historical rain forecast info from the norwegian met https://thredds.met.no/thredds/metno.html
 - norwegian weather api https://developer.yr.no/featured-products/forecast/ or https://api.met.no/weatherapi/locationforecast/2.0/documentation
 
 ### Modelling ideas
@@ -99,6 +98,8 @@ Rainfall:
 
 - functionality to use data from water data online
 - downloaded and tried the Franklin at fincham data
+- historical rain forecast info from the norwegian met https://thredds.met.no/thredds/metno.html - they only store historical forecast for scandinavia
+
 
 ### Modelling
 
