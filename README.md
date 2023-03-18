@@ -51,7 +51,8 @@ Rainfall:
 - feature selection (HIGH)
 - EBM models (MED)
 - Monotonically constrained models
-- Quantile regression for random forests
+- Quantile regression for random forests (low)
+- LGBM for regression (quantile and mean)
 - Quantile regression for xgboost when it becomes available (or try this? https://towardsdatascience.com/confidence-intervals-for-xgboost-cac2955a8fde)
 - variational inference (less keen on this)
 - impulse response neural networks
